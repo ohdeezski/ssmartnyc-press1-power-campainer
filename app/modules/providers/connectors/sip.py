@@ -3,6 +3,8 @@
 import socket
 
 from app.modules.providers.connectors.base import AbstractProvider
+
+
 class SIPConnector(AbstractProvider):
     """Connects to a generic SIP provider."""
 
@@ -70,6 +72,7 @@ class SIPConnector(AbstractProvider):
     def health(self):
         """Check SIP health."""
         import time
+
         start = time.time()
         connected = self._connected or self.connect()
         latency = int((time.time() - start) * 1000)

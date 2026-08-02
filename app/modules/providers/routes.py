@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
 from app.extensions import db
 from app.modules.providers.models import Provider
@@ -91,7 +91,7 @@ def reconnect_provider(provider_id):
 
 
 @providers_bp.route("/failover", methods=["POST"])
-def provider_failover(campaign_run_id=None):
+def provider_failover():
     """Failover to the next available provider."""
     data = request.get_json() or {}
     result = ProviderService.failover(data.get("campaign_run_id"))

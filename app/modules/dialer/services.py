@@ -1,6 +1,6 @@
 from app.extensions import db, socketio
-from app.modules.dialer.backends.simulation import SimulationBackend
 from app.modules.dialer.backends.asterisk import AsteriskBackend
+from app.modules.dialer.backends.simulation import SimulationBackend
 from app.modules.dialer.backends.twilio import TwilioBackend
 from app.modules.providers.models import Provider
 
@@ -58,12 +58,13 @@ class DialerService:
         campaign = None
         try:
             from app.modules.campaigns.models import Campaign
+
             campaign = Campaign.query.get(campaign_run.campaign_id)
         except Exception:
             pass
 
-        if campaign and campaign.provider_id:
-            return Provider.query.get(campaign.provider_id)
+        if campaign and campaign.provider_ids and len(campaign.provider_ids) > 0:
+            return Provider.query.get(campaign.provider_ids[0])
 
         # Fall back to highest-priority connected provider
         return (
@@ -89,12 +90,16 @@ class DialerService:
 
         # Launch
         backend.launch(campaign_run, contacts)
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run_id,
-            "action": "launched",
-            "message": "Campaign launched",
-            "level": "info",
-        }, room=f"campaign:{campaign_run_id}")
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run_id,
+                "action": "launched",
+                "message": "Campaign launched",
+                "level": "info",
+            },
+            room=f"campaign:{campaign_run_id}",
+        )
 
         # Tick until all calls are complete
         max_ticks = 200
@@ -106,14 +111,18 @@ class DialerService:
             # Emit progress every 10 ticks
             if tick_num % 10 == 0:
                 status = backend.status(campaign_run)
-                socketio.emit("campaign_event", {
-                    "run_id": campaign_run_id,
-                    "action": "tick",
-                    "tick": tick_num,
-                    "status_counts": status["status_counts"],
-                    "total_calls": status["total_calls"],
-                    "level": "info",
-                }, room=f"campaign:{campaign_run_id}")
+                socketio.emit(
+                    "campaign_event",
+                    {
+                        "run_id": campaign_run_id,
+                        "action": "tick",
+                        "tick": tick_num,
+                        "status_counts": status["status_counts"],
+                        "total_calls": status["total_calls"],
+                        "level": "info",
+                    },
+                    room=f"campaign:{campaign_run_id}",
+                )
 
         # Finalize
         self._finalize(campaign_run)
@@ -135,12 +144,15 @@ class DialerService:
 
     def _finalize(self, campaign_run):
         """Mark campaign run as finished and update counters."""
+        from app.modules.dialer.models import Call
+
         calls = Call.query.filter_by(campaign_run_id=campaign_run.id).all()
         total = len(calls)
         answered = sum(1 for c in calls if c.outcome == "answered")
         press1 = sum(1 for c in calls if c.outcome == "press1")
         voicemail = sum(1 for c in calls if c.outcome == "voicemail")
-        failed = sum(1 for c in calls if c.outcome in ("failed", "no_answer"))
+        no_answer = sum(1 for c in calls if c.outcome == "no_answer")
+        failed = sum(1 for c in calls if c.outcome in ("failed", "blocked"))
 
         campaign_run.status = "finished"
         campaign_run.finished_at = db.func.now()
@@ -148,6 +160,9 @@ class DialerService:
         campaign_run.success_count = answered
         campaign_run.failed_count = failed
         campaign_run.conversion_count = press1
+        campaign_run.voicemail_count = voicemail
+        campaign_run.no_answer_count = no_answer
+        campaign_run.retry_count = sum(1 for c in calls if c.attempt > 1)
         campaign_run.duration = 0
         db.session.commit()
 

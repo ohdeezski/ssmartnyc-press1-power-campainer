@@ -15,6 +15,7 @@ class TwilioConnector(AbstractProvider):
         """Lazily initialize the Twilio client."""
         if self._client is None:
             from twilio.rest import Client
+
             self._client = Client(
                 self.config.get("account_sid", ""),
                 self.config.get("auth_token", ""),
@@ -54,6 +55,7 @@ class TwilioConnector(AbstractProvider):
     def health(self):
         """Check Twilio health."""
         import time
+
         start = time.time()
         connected = self._connected or self.connect()
         latency = int((time.time() - start) * 1000)

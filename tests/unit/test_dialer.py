@@ -3,7 +3,9 @@
 import pytest
 
 from app import create_app, db
+from app.modules.dialer.backends.asterisk import AsteriskBackend
 from app.modules.dialer.backends.simulation import SimulationBackend
+from app.modules.dialer.backends.twilio import TwilioBackend
 from app.modules.dialer.models import Call, CallerProfile, Provider
 from app.modules.dialer.services import DialerService
 
@@ -150,3 +152,92 @@ class TestCallModel:
         assert d["contact_phone"] == "+15551234567"
         assert d["status"] == "complete"
         assert d["outcome"] == "answered"
+
+
+class TestAsteriskBackend:
+    def test_health_unreachable(self):
+        """AsteriskBackend returns unhealthy when AMI is not reachable."""
+        backend = AsteriskBackend(host="127.0.0.1", port=59999)
+        health = backend.health()
+        assert health["status"] == "unhealthy"
+
+    def test_launch_creates_calls(self, app):
+        """AsteriskBackend.launch creates Call rows for all contacts."""
+        from app.modules.campaigns.models import CampaignRun
+
+        run = CampaignRun(campaign_id=1, status="running")
+        db.session.add(run)
+        db.session.commit()
+
+        backend = AsteriskBackend()
+        calls = [{"phone": "+15551234567"}, {"phone": "+15559876543"}]
+        result = backend.launch(run, calls)
+        assert result["created"] == 2
+        # Call files won't be written (dir doesn't exist) but calls are created
+        assert result["call_files"] == 0
+
+    def test_tick_advances_all_stages(self, app):
+        """AsteriskBackend.tick advances calls through all 9 stages."""
+        from app.modules.campaigns.models import CampaignRun
+
+        run = CampaignRun(campaign_id=1, status="running")
+        db.session.add(run)
+        db.session.commit()
+
+        backend = AsteriskBackend()
+        backend.launch(run, [{"phone": "+15550000001"}])
+
+        max_ticks = 20
+        for _ in range(max_ticks):
+            result = backend.tick(run)
+            if result["processed"] == 0:
+                break
+
+        call = Call.query.filter_by(campaign_run_id=run.id).first()
+        assert call.status == "complete"
+        assert call.outcome in (
+            "answered",
+            "press1",
+            "voicemail",
+            "no_answer",
+            "failed",
+        )
+
+    def test_pause_and_stop(self, app):
+        """AsteriskBackend pause/stop transitions call states."""
+        from app.modules.campaigns.models import CampaignRun
+
+        run = CampaignRun(campaign_id=1, status="running")
+        db.session.add(run)
+        db.session.commit()
+
+        backend = AsteriskBackend()
+        backend.launch(run, [{"phone": "+15550000001"}])
+        backend.pause(run)
+
+        call = Call.query.filter_by(campaign_run_id=run.id).first()
+        assert call.status == "paused"
+
+        backend.stop(run)
+        call = Call.query.filter_by(campaign_run_id=run.id).first()
+        assert call.status == "failed"
+
+
+class TestTwilioBackend:
+    def test_health_without_credentials(self):
+        """TwilioBackend fails health check without credentials."""
+        backend = TwilioBackend()
+        health = backend.health()
+        assert health["status"] == "unhealthy"
+
+    def test_launch_creates_calls(self, app):
+        """TwilioBackend.launch creates Call rows."""
+        from app.modules.campaigns.models import CampaignRun
+
+        run = CampaignRun(campaign_id=1, status="running")
+        db.session.add(run)
+        db.session.commit()
+
+        backend = TwilioBackend()
+        result = backend.launch(run, [{"phone": "+15550000001"}])
+        assert result["created"] == 1

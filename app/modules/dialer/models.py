@@ -2,7 +2,15 @@ from app.extensions import db
 
 # Provider model moved to app.modules.providers.models
 # Keep a re-export here for backward compatibility
-from app.modules.providers.models import Provider, Connection, CallerProfile, NumberPool
+from app.modules.providers.models import (  # noqa: F401
+    CallerProfile,
+    Connection,
+    NumberPool,
+    Provider,
+)
+
+
+class Call(db.Model):  # type: ignore[name-defined]
     __tablename__ = "calls"
 
     id = db.Column(db.Integer, primary_key=True)

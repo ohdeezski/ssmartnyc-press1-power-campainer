@@ -23,6 +23,7 @@ class TwilioBackend(DialerBackend):
         if self._client is None:
             try:
                 from twilio.rest import Client
+
                 self._client = Client(self.account_sid, self.auth_token)
             except ImportError:
                 raise ImportError(
@@ -34,6 +35,7 @@ class TwilioBackend(DialerBackend):
     def health(self):
         """Check Twilio API connectivity."""
         import time
+
         start = time.time()
         try:
             # Verify credentials by listing calls
@@ -62,7 +64,9 @@ class TwilioBackend(DialerBackend):
         for contact in contacts:
             call = Call(
                 campaign_run_id=campaign_run.id,
-                contact_phone=contact.phone if hasattr(contact, "phone") else str(contact),
+                contact_phone=(
+                    contact.phone if hasattr(contact, "phone") else str(contact)
+                ),
                 status="preparing",
                 status_history=[{"stage": "preparing", "timestamp": now_iso}],
             )
@@ -83,7 +87,10 @@ class TwilioBackend(DialerBackend):
                 if call.status_history is None:
                     call.status_history = []
                 call.status_history.append(
-                    {"stage": "failed", "timestamp": datetime.now(timezone.utc).isoformat()}
+                    {
+                        "stage": "failed",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
                 )
 
         db.session.commit()
@@ -102,7 +109,12 @@ class TwilioBackend(DialerBackend):
         }
         if status_callback:
             params["status_callback"] = status_callback
-            params["status_callback_event"] = ["initiated", "ringing", "answered", "completed"]
+            params["status_callback_event"] = [
+                "initiated",
+                "ringing",
+                "answered",
+                "completed",
+            ]
 
         twilio_call = self.client.calls.create(**params)
 
@@ -116,20 +128,27 @@ class TwilioBackend(DialerBackend):
         db.session.commit()
 
         # Emit SocketIO event
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run.id,
-            "action": "call_dialed",
-            "call_id": call.id,
-            "contact_phone": call.contact_phone,
-            "twilio_call_sid": twilio_call.sid,
-            "level": "info",
-        }, room=f"campaign:{campaign_run.id}", namespace="/")
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run.id,
+                "action": "call_dialed",
+                "call_id": call.id,
+                "contact_phone": call.contact_phone,
+                "twilio_call_sid": twilio_call.sid,
+                "level": "info",
+            },
+            room=f"campaign:{campaign_run.id}",
+            namespace="/",
+        )
 
     def tick(self, campaign_run):
         """Check call statuses and update Call rows."""
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.in_(["preparing", "dialing", "ringing"])
-        ).all()
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.in_(["preparing", "dialing", "ringing"]))
+            .all()
+        )
 
         for call in calls:
             self._check_call_status(call, campaign_run)
@@ -144,7 +163,9 @@ class TwilioBackend(DialerBackend):
 
         try:
             twilio_call = self.client.calls(call.call_uuid).fetch()
-            twilio_status = twilio_call.status  # queued, ringing, in-progress, completed, failed, busy, no-answer
+            twilio_status = (
+                twilio_call.status
+            )  # queued, ringing, in-progress, completed, failed, busy, no-answer
 
             status_map = {
                 "queued": "dialing",
@@ -163,19 +184,27 @@ class TwilioBackend(DialerBackend):
                 if call.status_history is None:
                     call.status_history = []
                 call.status_history.append(
-                    {"stage": new_status, "timestamp": datetime.now(timezone.utc).isoformat()}
+                    {
+                        "stage": new_status,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
                 )
 
                 # Emit SocketIO event
-                socketio.emit("campaign_event", {
-                    "run_id": campaign_run.id,
-                    "action": "call_stage",
-                    "call_id": call.id,
-                    "contact_phone": call.contact_phone,
-                    "stage": new_status,
-                    "twilio_status": twilio_status,
-                    "level": "info",
-                }, room=f"campaign:{campaign_run.id}", namespace="/")
+                socketio.emit(
+                    "campaign_event",
+                    {
+                        "run_id": campaign_run.id,
+                        "action": "call_stage",
+                        "call_id": call.id,
+                        "contact_phone": call.contact_phone,
+                        "stage": new_status,
+                        "twilio_status": twilio_status,
+                        "level": "info",
+                    },
+                    room=f"campaign:{campaign_run.id}",
+                    namespace="/",
+                )
 
                 # Handle final outcomes
                 if new_status == "complete":
@@ -191,9 +220,11 @@ class TwilioBackend(DialerBackend):
 
     def pause(self, campaign_run):
         """Pause all active calls."""
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.notin_(["complete", "failed", "blocked"])
-        ).all()
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.notin_(["complete", "failed", "blocked"]))
+            .all()
+        )
         for call in calls:
             call.status = "paused"
             if call.status_history is None:
@@ -205,9 +236,11 @@ class TwilioBackend(DialerBackend):
 
     def stop(self, campaign_run):
         """Stop all active calls."""
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.notin_(["complete", "failed", "blocked"])
-        ).all()
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.notin_(["complete", "failed", "blocked"]))
+            .all()
+        )
         for call in calls:
             call.status = "failed"
             call.finished_at = db.func.now()

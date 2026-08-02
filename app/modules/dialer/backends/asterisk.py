@@ -29,15 +29,27 @@ class AsteriskBackend(DialerBackend):
     DEFAULT_CONTEXT = "from-internal"
     DEFAULT_EXTENSION = "s"
 
-    def __init__(self, host=None, port=None, username=None, secret=None,
-                 call_file_dir=None, context=None, extension=None):
+    def __init__(
+        self,
+        host=None,
+        port=None,
+        username=None,
+        secret=None,
+        call_file_dir=None,
+        context=None,
+        extension=None,
+    ):
         self.host = host or os.environ.get("ASTERISK_HOST", "127.0.0.1")
         self.port = port or int(os.environ.get("ASTERISK_PORT", self.AMI_PORT))
         self.username = username or os.environ.get("ASTERISK_USER", "admin")
         self.secret = secret or os.environ.get("ASTERISK_SECRET", "admin")
         self.call_file_dir = call_file_dir or self.CALL_FILE_DIR
-        self.context = context or os.environ.get("ASTERISK_CONTEXT", self.DEFAULT_CONTEXT)
-        self.extension = extension or os.environ.get("ASTERISK_EXTENSION", self.DEFAULT_EXTENSION)
+        self.context = context or os.environ.get(
+            "ASTERISK_CONTEXT", self.DEFAULT_CONTEXT
+        )
+        self.extension = extension or os.environ.get(
+            "ASTERISK_EXTENSION", self.DEFAULT_EXTENSION
+        )
 
         self._ami_socket = None
         self._ami_thread = None
@@ -89,7 +101,9 @@ class AsteriskBackend(DialerBackend):
         for contact in contacts:
             call = Call(
                 campaign_run_id=campaign_run.id,
-                contact_phone=contact.phone if hasattr(contact, "phone") else str(contact),
+                contact_phone=(
+                    contact.phone if hasattr(contact, "phone") else str(contact)
+                ),
                 status="preparing",
                 status_history=[{"stage": "preparing", "timestamp": now_iso}],
             )
@@ -110,10 +124,14 @@ class AsteriskBackend(DialerBackend):
         return {"created": len(calls), "call_files": generated}
 
     def tick(self, campaign_run):
-        """Advance all 'preparing' or 'dialing' calls by one stage."""
+        """Advance all active calls (not yet complete/failed/blocked/paused)."""
         pending = (
             Call.query.filter_by(campaign_run_id=campaign_run.id)
-            .filter(Call.status.in_(["preparing", "dialing", "ringing"]))
+            .filter(
+                Call.status.notin_(
+                    ["complete", "failed", "blocked", "paused", "no_answer"]
+                )
+            )
             .all()
         )
         for call in pending:
@@ -123,9 +141,17 @@ class AsteriskBackend(DialerBackend):
 
     def pause(self, campaign_run):
         """Pause all active calls."""
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.notin_(["complete", "failed", "blocked"])
-        ).all()
+        self._ami_connected = False
+        if self._ami_socket:
+            try:
+                self._ami_socket.sendall(b"Action: Logoff\r\n\r\n")
+            except Exception:
+                pass
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.notin_(["complete", "failed", "blocked"]))
+            .all()
+        )
         for call in calls:
             call.status = "paused"
             if call.status_history is None:
@@ -137,9 +163,17 @@ class AsteriskBackend(DialerBackend):
 
     def stop(self, campaign_run):
         """Stop all active calls."""
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.notin_(["complete", "failed", "blocked"])
-        ).all()
+        self._ami_connected = False
+        if self._ami_socket:
+            try:
+                self._ami_socket.sendall(b"Action: Logoff\r\n\r\n")
+            except Exception:
+                pass
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.notin_(["complete", "failed", "blocked"]))
+            .all()
+        )
         for call in calls:
             call.status = "failed"
             call.finished_at = db.func.now()
@@ -227,9 +261,7 @@ class AsteriskBackend(DialerBackend):
             return
 
         try:
-            self._ami_socket.sendall(
-                b"Action: Events\r\nEventMask: on\r\n\r\n"
-            )
+            self._ami_socket.sendall(b"Action: Events\r\nEventMask: on\r\n\r\n")
 
             buffer = ""
             while self._ami_connected:
@@ -268,41 +300,53 @@ class AsteriskBackend(DialerBackend):
 
         # Map AMI events to call lifecycle events
         channel = event_data.get("Channel", "")
-        exten = event_data.get("Exten", "")
         unique_id = event_data.get("Uniqueid", "")
 
         if event_type == "Newstate":
             state = event_data.get("ChannelStateDesc", "")
             self._emit_call_event(
-                campaign_run, "call_state",
-                {"channel": channel, "state": state, "unique_id": unique_id}
+                campaign_run,
+                "call_state",
+                {"channel": channel, "state": state, "unique_id": unique_id},
             )
         elif event_type == "Hangup":
             self._emit_call_event(
-                campaign_run, "call_completed",
-                {"channel": channel, "unique_id": unique_id, "cause": event_data.get("HangupCause", "")}
+                campaign_run,
+                "call_completed",
+                {
+                    "channel": channel,
+                    "unique_id": unique_id,
+                    "cause": event_data.get("HangupCause", ""),
+                },
             )
         elif event_type == "DTMF":
             digit = event_data.get("Digit", "")
             self._emit_call_event(
-                campaign_run, "press1_detected",
-                {"channel": channel, "digit": digit, "unique_id": unique_id}
+                campaign_run,
+                "press1_detected",
+                {"channel": channel, "digit": digit, "unique_id": unique_id},
             )
         elif event_type == "Newchannel":
             self._emit_call_event(
-                campaign_run, "call_dialed",
-                {"channel": channel, "unique_id": unique_id}
+                campaign_run,
+                "call_dialed",
+                {"channel": channel, "unique_id": unique_id},
             )
 
     def _emit_call_event(self, campaign_run, action, data):
         """Emit a SocketIO event for a call lifecycle action."""
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run.id,
-            "action": action,
-            "campaign_run_id": campaign_run.id,
-            **data,
-            "level": "info",
-        }, room=f"campaign:{campaign_run.id}", namespace="/")
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run.id,
+                "action": action,
+                "campaign_run_id": campaign_run.id,
+                **data,
+                "level": "info",
+            },
+            room=f"campaign:{campaign_run.id}",
+            namespace="/",
+        )
 
     # ------------------------------------------------------------------ #
     #  Call File Writer                                                   #
@@ -319,16 +363,17 @@ class AsteriskBackend(DialerBackend):
 
             # Build call file content
             content_lines = [
-                f"Channel: SIP/{self.extension}",
+                f"Channel: Local/{call.contact_phone}@from-internal",
                 f"Context: {self.context}",
                 f"Extension: {self.extension}",
-                f"Priority: 1",
+                "Priority: 1",
                 f"CallerID: {campaign_run.settings_snapshot.get('caller_id', 'Campaign') if campaign_run.settings_snapshot else 'Campaign'}",
-                f"MaxRetries: 3",
-                f"RetryTime: 60",
-                f"WaitTime: 30",
+                "MaxRetries: 3",
+                "RetryTime: 60",
+                "WaitTime: 30",
                 f"Account: campaign_{campaign_run.id}",
-                f"Archive: yes",
+                "Archive: yes",
+                f'Set: CALLERID(all)="Press1 Campaign"<{call.contact_phone}>',
                 "",
             ]
 
@@ -358,7 +403,9 @@ class AsteriskBackend(DialerBackend):
             "transfer",
             "complete",
         ]
-        current_idx = stage_order.index(call.status) if call.status in stage_order else 0
+        current_idx = (
+            stage_order.index(call.status) if call.status in stage_order else 0
+        )
         next_idx = min(current_idx + 1, len(stage_order) - 1)
         next_stage = stage_order[next_idx]
 
@@ -370,27 +417,34 @@ class AsteriskBackend(DialerBackend):
         )
 
         # Emit SocketIO event for the stage transition
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run.id,
-            "action": "call_stage",
-            "call_id": call.id,
-            "contact_phone": call.contact_phone,
-            "stage": next_stage,
-            "level": "info",
-        }, room=f"campaign:{campaign_run.id}", namespace="/")
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run.id,
+                "action": "call_stage",
+                "call_id": call.id,
+                "contact_phone": call.contact_phone,
+                "stage": next_stage,
+                "level": "info",
+            },
+            room=f"campaign:{campaign_run.id}",
+            namespace="/",
+        )
 
         # Determine final outcome at the 'complete' stage
         if next_stage == "complete":
             import random
+
             rng = random.Random(int(call.id))
-            if rng.random() < 0.65:
+            roll = rng.random()
+            if roll < 0.65:
                 call.outcome = "answered"
-            elif rng.random() < 0.12:
+            elif roll < 0.77:
                 call.outcome = "press1"
                 call.press1_detected = True
-            elif rng.random() < 0.10:
+            elif roll < 0.87:
                 call.outcome = "voicemail"
-            elif rng.random() < 0.15:
+            elif roll < 0.99:
                 call.outcome = "no_answer"
             else:
                 call.outcome = "failed"

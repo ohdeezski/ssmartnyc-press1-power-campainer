@@ -59,7 +59,10 @@ class AsteriskConnector(AbstractProvider):
         # Check if call file directory exists
         call_file_dir = self.config.get("call_file_dir", "/var/spool/asterisk/outgoing")
         if os.path.isdir(call_file_dir):
-            return {"status": "ok", "message": "Asterisk connected, call file dir accessible"}
+            return {
+                "status": "ok",
+                "message": "Asterisk connected, call file dir accessible",
+            }
 
         return {"status": "ok", "message": "Asterisk AMI connected"}
 
@@ -76,6 +79,7 @@ class AsteriskConnector(AbstractProvider):
     def health(self):
         """Check Asterisk health."""
         import time
+
         start = time.time()
         connected = self._connected or self.connect()
         latency = int((time.time() - start) * 1000)

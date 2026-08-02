@@ -6,6 +6,7 @@ configengine, assetlibrary, filemanager): routes thin, logic in services.py.
 
 Spec reference: docs/version-1.0-spec.md L110-L114 (Workflow / Rule / Event).
 """
+
 from app.extensions import db
 from app.modules.campaigns.models import Campaign
 from app.modules.notifications.services import send_success

@@ -3,4 +3,4 @@ from flask import Blueprint
 
 providers_bp = Blueprint("providers", __name__, url_prefix="/api/providers")
 
-from app.modules.providers import models, services, routes, connectors
+from app.modules.providers import connectors, models, routes, services

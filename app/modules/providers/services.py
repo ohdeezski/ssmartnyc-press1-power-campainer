@@ -2,10 +2,9 @@
 
 from app.extensions import db
 from app.modules.providers.connectors.asterisk import AsteriskConnector
-from app.modules.providers.connectors.twilio import TwilioConnector
 from app.modules.providers.connectors.sip import SIPConnector
+from app.modules.providers.connectors.twilio import TwilioConnector
 from app.modules.providers.models import Provider  # noqa: F401 (re-export)
-
 
 CONNECTOR_MAP = {
     "asterisk": AsteriskConnector,
@@ -87,15 +86,20 @@ class ProviderService:
 
     @staticmethod
     def failover(campaign_run_id):
-        """Failover to the next available provider."""
-        from app.modules.dialer.models import Provider as DialerProvider
+        """Failover to the next available provider for a campaign run."""
+        # Find the next connected provider with higher priority.
+        # In a full implementation, this would:
+        # 1. Look up the current campaign_run's provider
+        # 2. Query for connected providers with priority > current
+        # 3. If none, wrap to lowest priority connected provider
+        # 4. Return the new provider so the caller can switch backends
+        next_provider = (
+            Provider.query.filter_by(status="connected")
+            .order_by(Provider.priority.asc())
+            .first()
+        )
 
-        # Find the next connected provider with higher priority
-        current = DialerProvider.query.filter_by(status="connected").order_by(
-            DialerProvider.priority.asc()
-        ).first()
-
-        if current:
-            return {"provider_id": current.id, "kind": current.kind}
+        if next_provider:
+            return {"provider_id": next_provider.id, "kind": next_provider.kind}
 
         return {"error": "No connected providers available"}

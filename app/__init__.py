@@ -167,6 +167,7 @@ def create_app(config_class=None):
         from app.modules.dialer import models as _dialer_models  # noqa: F401
         from app.modules.events import models as _events_models  # noqa: F401
         from app.modules.notifications import models as _notif_models  # noqa: F401
+        from app.modules.providers import models as _providers_models  # noqa: F401
         from app.modules.storage import models as _storage_models  # noqa: F401
         from app.modules.workflow import models as _workflow_models  # noqa: F401
 
