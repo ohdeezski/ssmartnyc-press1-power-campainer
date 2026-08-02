@@ -49,6 +49,7 @@ class Config:
     SESSION_COOKIE_SECURE = False
     WTF_CSRF_ENABLED = True
     AUTO_CREATE_TABLES = True
+    DIALER_BACKEND = os.environ.get("DIALER_BACKEND", "simulation")
 
     @staticmethod
     def init_app(app):

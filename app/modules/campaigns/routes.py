@@ -1,11 +1,12 @@
 import json
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.modules.campaigns import campaigns_bp
 from app.modules.campaigns.models import Campaign, CampaignRun
+from app.modules.campaigns.services import CampaignService
 
 
 @campaigns_bp.route("/")
@@ -111,3 +112,62 @@ def campaign_report(campaign_id):
     return render_template(
         "campaigns/report.html", campaign=campaign, user=current_user
     )
+
+
+# JSON API endpoints
+@campaigns_bp.route("/<int:campaign_id>/readiness", methods=["GET"])
+@login_required
+def campaign_readiness(campaign_id):
+    campaign = Campaign.query.get_or_404(campaign_id)
+    return jsonify(campaign.readiness or {})
+
+
+@campaigns_bp.route("/<int:campaign_id>/verify", methods=["POST"])
+@login_required
+def campaign_verify(campaign_id):
+    result = CampaignService.verify_campaign(campaign_id)
+    if result is None:
+        return jsonify({"error": "Campaign not found"}), 404
+    return jsonify(result)
+
+
+@campaigns_bp.route("/<int:campaign_id>/estimate", methods=["GET"])
+@login_required
+def campaign_estimate(campaign_id):
+    result = CampaignService.estimate_campaign(campaign_id)
+    if result is None:
+        return jsonify({"error": "Campaign not found"}), 404
+    return jsonify(result)
+
+
+@campaigns_bp.route("/<int:campaign_id>/prepare", methods=["POST"])
+@login_required
+def campaign_prepare(campaign_id):
+    campaign = CampaignService.prepare_campaign(campaign_id)
+    if campaign is None:
+        return jsonify({"error": "Campaign not found"}), 404
+    return jsonify({"status": campaign.status, "readiness": campaign.readiness})
+
+
+@campaigns_bp.route("/<int:campaign_id>/launch", methods=["POST"])
+@login_required
+def campaign_launch_json(campaign_id):
+    result = CampaignService.launch_campaign(campaign_id)
+    if result is None:
+        return jsonify({"error": "Campaign not found"}), 404
+    if isinstance(result, dict) and "error" in result:
+        return jsonify(result), 400
+    campaign = result
+    started = (
+        campaign.started_at.isoformat()
+        if campaign.started_at
+        else None
+    )
+    return jsonify({"status": campaign.status, "started_at": started})
+
+
+@campaigns_bp.route("/<int:campaign_id>/runs", methods=["GET"])
+@login_required
+def campaign_runs(campaign_id):
+    runs = CampaignRun.query.filter_by(campaign_id=campaign_id).order_by(CampaignRun.run_number.desc()).all()
+    return jsonify([r.to_dict() for r in runs])

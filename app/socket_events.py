@@ -60,3 +60,19 @@ def on_connect():
 @socketio.on("system:get")
 def on_system_get():
     socketio.emit("system", collect_system_metrics())
+
+
+@socketio.on("join")
+def on_join(data):
+    """Join a campaign room for live event streaming."""
+    run_id = data.get("run_id")
+    if run_id:
+        socketio.join_room(f"campaign:{run_id}")
+
+
+@socketio.on("leave")
+def on_leave(data):
+    """Leave a campaign room."""
+    run_id = data.get("run_id")
+    if run_id:
+        socketio.leave_room(f"campaign:{run_id}")

@@ -23,6 +23,16 @@ class Campaign(db.Model):  # type: ignore[name-defined]
         nullable=True,
     )
     workflow_id = db.Column(db.Integer, db.ForeignKey("workflows.id"), nullable=True)
+    contact_list_id = db.Column(db.Integer, db.ForeignKey("contact_lists.id"), nullable=True)
+    caller_profile_id = db.Column(db.Integer, db.ForeignKey("caller_profiles.id"), nullable=True)
+    provider_ids = db.Column(db.JSON, default=[])
+    concurrent_calls = db.Column(db.Integer, nullable=True)
+    retry_attempts = db.Column(db.Integer, nullable=True)
+    retry_delay = db.Column(db.Integer, nullable=True)
+    business_hours_only = db.Column(db.Boolean, nullable=False, default=False)
+    verified_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    readiness = db.Column(db.JSON, nullable=True)
+    estimate = db.Column(db.JSON, nullable=True)
     settings = db.Column(db.JSON, default={})
     results = db.Column(db.JSON, default={})
 
@@ -94,6 +104,10 @@ class CampaignRun(db.Model):  # type: ignore[name-defined]
     cost = db.Column(db.Float, default=0.0)
     duration = db.Column(db.Integer, default=0)
     settings_snapshot = db.Column(db.JSON, default={})
+    blocked_count = db.Column(db.Integer, default=0)
+    voicemail_count = db.Column(db.Integer, default=0)
+    no_answer_count = db.Column(db.Integer, default=0)
+    retry_count = db.Column(db.Integer, default=0)
 
     def to_dict(self):
         return {

@@ -18,6 +18,9 @@ def _register_blueprints(app):
     from app.modules.auth import auth_bp
     from app.modules.campaigns import campaigns_bp
     from app.modules.configengine import configengine_bp
+    from app.modules.contacts import contacts_bp
+    from app.modules.dialer import dialer_bp
+    from app.modules.events import events_bp
     from app.modules.filemanager import filemanager_bp
     from app.modules.notifications import notifications_bp
     from app.modules.taskqueue import taskqueue_bp
@@ -35,6 +38,9 @@ def _register_blueprints(app):
         notifications_bp,
         taskqueue_bp,
         workflow_bp,
+        contacts_bp,
+        dialer_bp,
+        events_bp,
     ):
         app.register_blueprint(blueprint)
 
@@ -155,6 +161,9 @@ def create_app(config_class=None):
         from app.modules.auth import models as _auth_models  # noqa: F401
         from app.modules.campaigns import models as _campaign_models  # noqa: F401
         from app.modules.configengine import models as _config_models  # noqa: F401
+        from app.modules.contacts import models as _contacts_models  # noqa: F401
+        from app.modules.dialer import models as _dialer_models  # noqa: F401
+        from app.modules.events import models as _events_models  # noqa: F401
         from app.modules.notifications import models as _notif_models  # noqa: F401
         from app.modules.storage import models as _storage_models  # noqa: F401
         from app.modules.workflow import models as _workflow_models  # noqa: F401
