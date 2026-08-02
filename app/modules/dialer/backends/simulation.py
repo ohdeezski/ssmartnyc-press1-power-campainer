@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timezone
 
-from app.extensions import db
+from app.extensions import db, socketio
 from app.modules.dialer.backends.base import DialerBackend
 from app.modules.dialer.models import Call
 
@@ -79,6 +79,18 @@ class SimulationBackend(DialerBackend):
         call.status_history.append(
             {"stage": next_stage, "timestamp": datetime.now(timezone.utc).isoformat()}
         )
+
+        # Emit SocketIO event for the stage transition
+        campaign_run_id = call.campaign_run_id
+        socketio.emit("campaign_event", {
+            "run_id": campaign_run_id,
+            "action": "call_stage",
+            "call_id": call.id,
+            "contact_phone": call.contact_phone,
+            "stage": next_stage,
+            "outcome": call.outcome if next_stage == "complete" else None,
+            "level": "info",
+        }, room=f"campaign:{campaign_run_id}", namespace="/")
 
         # Determine final outcome at the 'complete' stage
         if next_stage == "complete":

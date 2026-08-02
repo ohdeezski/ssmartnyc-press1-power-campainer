@@ -31,6 +31,7 @@
             <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Type</th>
             <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Status</th>
             <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Created</th>
+            <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-outline-variant/30">
@@ -44,6 +45,15 @@
               {% set status = c.status %}{% include "components/status_badge.html" %}
             </td>
             <td class="px-4 py-3 text-outline font-mono">{{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '—' }}</td>
+            <td class="px-4 py-3 text-center">
+              {% if c.status == 'running' %}
+              <a href="{{ url_for('ui.mission_control', campaign_id=c.id) }}" class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim uppercase">📡 Live</a>
+              {% elif c.status == 'ready' %}
+              <a href="{{ url_for('ui.campaign_wizard', campaign_id=c.id, step=3) }}" class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim uppercase">🚀 Launch</a>
+              {% else %}
+              <a href="{{ url_for('campaigns.campaign_detail', campaign_id=c.id) }}" class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim uppercase">View</a>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>

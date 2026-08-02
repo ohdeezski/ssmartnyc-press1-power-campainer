@@ -186,7 +186,97 @@
     initLiveMetrics();
     initModals();
     initNotificationActions();
+    initMissionControl();
   });
+
+  // Mission Control: listen for campaign events via WebSocket
+  function initMissionControl() {
+    var mcPanel = document.getElementById('mc-event-feed');
+    if (!mcPanel) return;
+    if (typeof io === 'undefined') return;
+
+    var socket = io();
+    socket.on('connect', function() {
+      // Join the campaign room if a run_id is available
+      var runId = mcPanel.getAttribute('data-run-id');
+      if (runId) {
+        socket.emit('join', { run_id: parseInt(runId) });
+      }
+    });
+
+    socket.on('campaign_event', function(data) {
+      // Add event to the feed
+      var li = document.createElement('li');
+      li.className = 'flex items-start gap-2 text-body-md';
+      var time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      var color = data.level === 'success' ? 'green' : data.level === 'error' ? 'red' : data.level === 'warning' ? 'yellow' : 'cyan';
+      var icon = data.action === 'finished' ? 'check_circle' : data.action === 'stopped' ? 'stop' : data.action === 'paused' ? 'pause' : data.action === 'launched' ? 'rocket_launch' : 'phone';
+      li.innerHTML = '<span class="mt-1 w-2 h-2 rounded-full shrink-0 bg-status-' + color + '"></span>' +
+        '<span class="font-mono text-label-sm text-label-sm text-outline shrink-0">' + time + '</span>' +
+        '<span class="text-on-surface">' + (data.message || data.action || '') + '</span>';
+      mcPanel.insertBefore(li, mcPanel.firstChild);
+      while (mcPanel.children.length > 50) {
+        mcPanel.removeChild(mcPanel.lastChild);
+      }
+
+      // Update progress pipeline if status counts provided
+      if (data.action === 'tick' && data.status_counts) {
+        updatePipeline(data.status_counts);
+      }
+
+      // Update call detail table
+      if (data.action === 'call_stage' && data.call_id) {
+        updateCallRow(data);
+      }
+
+      // Update counters on finish
+      if (data.action === 'finished' && data.counters) {
+        updateCounters(data.counters);
+      }
+    });
+  }
+
+  function updatePipeline(statusCounts) {
+    var pipeline = document.getElementById('mc-pipeline');
+    if (!pipeline) return;
+    var bars = pipeline.querySelectorAll('[data-stage]');
+    bars.forEach(function(bar) {
+      var stage = bar.getAttribute('data-stage');
+      var count = statusCounts[stage] || 0;
+      var total = parseInt(bar.getAttribute('data-total')) || 1;
+      var pct = Math.round((count / total) * 100);
+      var fill = bar.querySelector('.progress-fill');
+      var countEl = bar.querySelector('.progress-count');
+      if (fill) fill.style.width = pct + '%';
+      if (countEl) countEl.textContent = count;
+    });
+  }
+
+  function updateCallRow(data) {
+    var table = document.getElementById('mc-call-table');
+    if (!table) return;
+    var row = document.getElementById('call-row-' + data.call_id);
+    if (!row) {
+      row = document.createElement('tr');
+      row.id = 'call-row-' + data.call_id;
+      row.className = 'hover:bg-primary/5 transition-colors';
+      row.innerHTML =
+        '<td class="px-4 py-2 font-mono text-label-sm text-on-surface">' + (data.contact_phone || '—') + '</td>' +
+        '<td class="px-4 py-2 text-center"><span class="border border-primary/40 text-primary px-2 py-0.5 rounded text-[10px] uppercase">' + (data.stage || '—') + '</span></td>' +
+        '<td class="px-4 py-2 text-center text-on-surface">—</td>' +
+        '<td class="px-4 py-2 text-center font-mono text-label-sm text-on-surface">—</td>';
+      table.appendChild(row);
+    } else {
+      var cells = row.querySelectorAll('td');
+      if (cells[1]) cells[1].innerHTML = '<span class="border border-primary/40 text-primary px-2 py-0.5 rounded text-[10px] uppercase">' + (data.stage || '—') + '</span>';
+      if (cells[2] && data.outcome) cells[2].innerHTML = '<span class="text-on-surface">' + data.outcome + '</span>';
+    }
+  }
+
+  function updateCounters(counters) {
+    var countEl = document.getElementById('mc-call-count');
+    if (countEl) countEl.textContent = counters.total + ' calls';
+  }
 
   // Export for global use
   window.StreetSmart = {

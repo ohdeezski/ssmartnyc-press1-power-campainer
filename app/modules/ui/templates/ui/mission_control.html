@@ -1,0 +1,234 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Mission Control</h2>
+      <p class="text-body-md text-body-md text-outline mt-1">Live campaign operations — everything updates in real time.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('campaigns.campaign_list') }}" class="font-label-md text-label-md text-outline hover:text-primary uppercase tracking-wider transition-colors">← Campaigns</a>
+    </div>
+  </div>
+</div>
+
+{# Campaign header #}
+<div class="bg-surface border border-primary/40 rounded-xl p-4 mb-4">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h3 class="font-headline-md text-headline-md font-bold text-on-surface">{{ campaign.name }}</h3>
+      <p class="text-body-md text-body-md text-outline mt-1">
+        {{ campaign.type | upper }} · Run #{{ run.run_number if run else '—' }} ·
+        Started {{ run.started_at.strftime('%Y-%m-%d %H:%M') if run and run.started_at else 'Not yet' }}
+      </p>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="font-label-md text-label-md uppercase tracking-wider">
+        {% if campaign.status == 'running' %}
+        <span class="inline-block w-2 h-2 rounded-full bg-status-green pulse-dot mr-2"></span>LIVE
+        {% elif campaign.status == 'finished' %}
+        <span class="inline-block w-2 h-2 rounded-full bg-status-white mr-2"></span>FINISHED
+        {% elif campaign.status == 'paused' %}
+        <span class="inline-block w-2 h-2 rounded-full bg-status-yellow mr-2"></span>PAUSED
+        {% else %}
+        <span class="inline-block w-2 h-2 rounded-full bg-status-gray mr-2"></span>{{ campaign.status | upper }}
+        {% endif %}
+      </span>
+      <span class="font-mono text-label-md text-label-md text-primary" id="mc-elapsed">--:--</span>
+    </div>
+  </div>
+</div>
+
+{# Stats bar #}
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+  {% set label = 'Calls' %}{% set value = run.total_calls if run else 0 %}{% set icon = 'phone' %}{% set tone = 'cyan' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Answered' %}{% set value = run.success_count if run else 0 %}{% set icon = 'check_circle' %}{% set tone = 'green' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Press 1' %}{% set value = run.conversion_count if run else 0 %}{% set icon = 'touch_app' %}{% set tone = 'purple' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Voicemail' %}{% set value = (run.counters.voicemail if run and run.counters else 0) %}{% set icon = 'voicemail' %}{% set tone = 'yellow' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Failed' %}{% set value = run.failed_count if run else 0 %}{% set icon = 'error' %}{% set tone = 'red' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Cost' %}{% set value = '$' ~ (run.cost if run else '0.00') %}{% set icon = 'payments' %}{% set tone = 'blue' %}
+  {% include "components/stat_card.html" %}
+</div>
+
+{# Progress pipeline + Live event feed #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+  <div class="lg:col-span-2 bg-surface border border-primary/40 rounded-xl p-4">
+    <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-4">Progress Pipeline</h3>
+    <div class="space-y-3" id="mc-pipeline">
+      {% for stage in ['preparing', 'dialing', 'ringing', 'answered', 'playing_intro', 'waiting', 'press1', 'transfer', 'complete'] %}
+      {% set count = (run.status_counts or {}).get(stage, 0) if run else 0 %}
+      {% set total = run.total_calls if run else 1 %}
+      {% set bar_colors = {
+        'preparing': 'bg-status-blue',
+        'dialing': 'bg-status-cyan',
+        'ringing': 'bg-status-yellow',
+        'answered': 'bg-status-green',
+        'playing_intro': 'bg-status-cyan',
+        'waiting': 'bg-status-yellow',
+        'press1': 'bg-status-purple',
+        'transfer': 'bg-status-purple',
+        'complete': 'bg-status-white',
+      } %}
+      {% include "components/pipeline_bar.html" %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div>
+    <div id="mc-event-feed">
+    {% include "components/event_feed.html" %}
+  </div>
+  </div>
+</div>
+
+{# Provider health + System metrics + Actions #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+  <div>
+    {% include "components/health_panel.html" %}
+  </div>
+
+  <div class="lg:col-span-2 bg-surface border border-primary/40 rounded-xl p-4">
+    <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-4">Actions</h3>
+    <div class="flex items-center gap-3 flex-wrap">
+      {% if campaign.status == 'running' %}
+      <form method="POST" action="{{ url_for('campaigns.campaign_pause', campaign_id=campaign.id) }}" class="inline">
+        <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-yellow px-4 py-2 rounded hover:opacity-80 transition-opacity">⏸ PAUSE</button>
+      </form>
+      <form method="POST" action="{{ url_for('campaigns.campaign_stop', campaign_id=campaign.id) }}" class="inline">
+        <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-red px-4 py-2 rounded hover:opacity-80 transition-opacity">⏹ STOP</button>
+      </form>
+      {% elif campaign.status == 'paused' %}
+      <form method="POST" action="{{ url_for('campaigns.campaign_launch', campaign_id=campaign.id) }}" class="inline">
+        <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-green px-4 py-2 rounded hover:opacity-80 transition-opacity">▶ RESUME</button>
+      </form>
+      <form method="POST" action="{{ url_for('campaigns.campaign_stop', campaign_id=campaign.id) }}" class="inline">
+        <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-red px-4 py-2 rounded hover:opacity-80 transition-opacity">⏹ STOP</button>
+      </form>
+      {% endif %}
+      <button class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors" onclick="exportReport()">📥 EXPORT</button>
+      <button class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-purple px-4 py-2 rounded hover:opacity-80 transition-opacity" onclick="window.location.href='#'">🤖 AI</button>
+    </div>
+  </div>
+</div>
+
+{# Campaign detail table #}
+<div class="bg-surface border border-primary/40 rounded-xl overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
+    <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest">Call Detail</h3>
+    <span class="font-mono text-label-sm text-label-sm text-outline" id="mc-call-count">0 calls</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-lowest border-b border-outline-variant">
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Phone</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Stage</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Outcome</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Duration</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/30" id="mc-call-table">
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-outline">Waiting for calls to start…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  var runId = {{ run.id if run else 'null' }};
+  var campaignId = {{ campaign.id }};
+
+  // Join the campaign room for live events
+  if (runId && typeof io !== 'undefined') {
+    var socket = io();
+    socket.emit('join', { run_id: runId });
+
+    socket.on('campaign_event', function(data) {
+      // Update event feed
+      var feed = document.getElementById('mc-event-feed');
+      if (feed) {
+        var li = document.createElement('li');
+        li.className = 'flex items-start gap-2 text-body-md';
+        var time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        var color = data.level === 'success' ? 'green' : data.level === 'error' ? 'red' : data.level === 'warning' ? 'yellow' : 'cyan';
+        li.innerHTML = '<span class="mt-1 w-2 h-2 rounded-full shrink-0 bg-status-' + color + '"></span>' +
+          '<span class="font-mono text-label-sm text-label-sm text-outline shrink-0">' + time + '</span>' +
+          '<span class="text-on-surface">' + (data.message || data.action || '') + '</span>';
+        feed.insertBefore(li, feed.firstChild);
+        // Keep feed manageable
+        while (feed.children.length > 50) {
+          feed.removeChild(feed.lastChild);
+        }
+      }
+
+      // Update pipeline counts
+      if (data.action === 'tick' && data.status_counts) {
+        updatePipeline(data.status_counts);
+      }
+
+      // Update call detail table
+      if (data.action === 'call_stage' && data.call_id) {
+        updateCallRow(data);
+      }
+
+      // Update counters on finish
+      if (data.action === 'finished' && data.counters) {
+        updateCounters(data.counters);
+      }
+    });
+  }
+
+  function updatePipeline(statusCounts) {
+    var pipeline = document.getElementById('mc-pipeline');
+    if (!pipeline) return;
+    var bars = pipeline.querySelectorAll('[data-stage]');
+    bars.forEach(function(bar) {
+      var stage = bar.getAttribute('data-stage');
+      var count = statusCounts[stage] || 0;
+      var total = parseInt(bar.getAttribute('data-total')) || 1;
+      var pct = Math.round((count / total) * 100);
+      bar.querySelector('.progress-fill').style.width = pct + '%';
+      bar.querySelector('.progress-count').textContent = count;
+    });
+  }
+
+  function updateCallRow(data) {
+    var table = document.getElementById('mc-call-table');
+    if (!table) return;
+    var row = document.getElementById('call-row-' + data.call_id);
+    if (!row) {
+      row = document.createElement('tr');
+      row.id = 'call-row-' + data.call_id;
+      row.className = 'hover:bg-primary/5 transition-colors';
+      row.innerHTML =
+        '<td class="px-4 py-2 font-mono text-label-sm text-on-surface">' + (data.contact_phone || '—') + '</td>' +
+        '<td class="px-4 py-2 text-center"><span class="border border-primary/40 text-primary px-2 py-0.5 rounded text-[10px] uppercase">' + (data.stage || '—') + '</span></td>' +
+        '<td class="px-4 py-2 text-center text-on-surface">—</td>' +
+        '<td class="px-4 py-2 text-center font-mono text-label-sm text-on-surface">—</td>';
+      table.appendChild(row);
+    } else {
+      var cells = row.querySelectorAll('td');
+      if (cells[1]) cells[1].innerHTML = '<span class="border border-primary/40 text-primary px-2 py-0.5 rounded text-[10px] uppercase">' + (data.stage || '—') + '</span>';
+      if (cells[2] && data.outcome) cells[2].innerHTML = '<span class="text-on-surface">' + data.outcome + '</span>';
+    }
+  }
+
+  function updateCounters(counters) {
+    var countEl = document.getElementById('mc-call-count');
+    if (countEl) countEl.textContent = counters.total + ' calls';
+  }
+
+  function exportReport() {
+    window.location.href = '/campaigns/' + campaignId + '/report';
+  }
+})();
+</script>
+{% endblock %}

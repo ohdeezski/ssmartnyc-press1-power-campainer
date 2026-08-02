@@ -1,4 +1,4 @@
-from flask import redirect, render_template, url_for
+from flask import redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -120,6 +120,44 @@ def notifications_page():
     )
     return render_template(
         "ui/notifications.html", notifications=notifications, user=current_user
+    )
+
+
+@ui_bp.route("/mission-control/<int:campaign_id>")
+@login_required
+def mission_control(campaign_id):
+    from app.modules.campaigns.models import Campaign, CampaignRun
+    from app.modules.dialer.models import Call
+
+    campaign = Campaign.query.get_or_404(campaign_id)
+    run = CampaignRun.query.filter_by(campaign_id=campaign_id).order_by(CampaignRun.run_number.desc()).first()
+    calls = None
+    if run:
+        calls = Call.query.filter_by(campaign_run_id=run.id).order_by(Call.created_at.desc()).limit(50).all()
+    return render_template(
+        "ui/mission_control.html",
+        campaign=campaign,
+        run=run,
+        calls=calls,
+        user=current_user,
+    )
+
+
+@ui_bp.route("/campaign-wizard/<int:campaign_id>")
+@login_required
+def campaign_wizard(campaign_id):
+    from app.modules.campaigns.models import Campaign
+    from app.modules.contacts.models import ContactList
+
+    campaign = Campaign.query.get_or_404(campaign_id)
+    contact_lists = ContactList.query.order_by(ContactList.created_at.desc()).all()
+    step = request.args.get("step", 1, type=int)
+    return render_template(
+        "ui/campaign_wizard.html",
+        campaign=campaign,
+        contact_lists=contact_lists,
+        step=step,
+        user=current_user,
     )
 
 

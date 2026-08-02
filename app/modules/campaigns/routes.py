@@ -105,6 +105,12 @@ def campaign_detail(campaign_id):
     )
 
 
+@campaigns_bp.route("/<int:campaign_id>/wizard")
+@login_required
+def campaign_wizard(campaign_id):
+    return redirect(url_for("ui.campaign_wizard", campaign_id=campaign_id))
+
+
 @campaigns_bp.route("/<int:campaign_id>/report")
 @login_required
 def campaign_report(campaign_id):

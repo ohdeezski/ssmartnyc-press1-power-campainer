@@ -1,0 +1,198 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="mb-6">
+  <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Campaign Wizard</h2>
+  <p class="text-body-md text-body-md text-outline mt-1">Step-by-step setup. We'll check everything is ready before you launch.</p>
+</div>
+
+{# Stepper #}
+<div class="bg-surface border border-primary/40 rounded-xl p-4 mb-6">
+  <div class="flex items-center justify-between">
+    {% set steps = ['Prepare', 'Verify', 'Launch', 'Live', 'Finish'] %}
+    {% set current_step = step | default(1) %}
+    {% for i in range(1, 6) %}
+    <div class="flex items-center">
+      <div class="w-8 h-8 rounded-full flex items-center justify-center font-mono text-label-md font-bold
+        {{ 'bg-primary text-background' if i < current_step else 'border-2 border-primary text-primary' if i == current_step else 'border border-outline-variant text-outline' }}">
+        {% if i < current_step %}✓{% else %}{{ i }}{% endif %}
+      </div>
+      <span class="ml-2 font-label-md text-label-md
+        {{ 'text-primary' if i <= current_step else 'text-outline' }}">
+        {{ steps[i-1] }}
+      </span>
+      {% if i < 5 %}
+      <div class="w-12 h-0.5 mx-4
+        {{ 'bg-primary' if i < current_step else 'bg-outline-variant' }}"></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{# Step content #}
+<div class="bg-surface border border-primary/40 rounded-xl p-6">
+  {% if step == 1 %}
+  {# PREPARE step #}
+  <h3 class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-widest mb-4">Step 1 — Prepare</h3>
+  <p class="text-body-md text-body-md text-outline mb-4">Choose your contacts, audio files, and campaign settings.</p>
+
+  <div class="space-y-4">
+    <div>
+      <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Campaign Name</label>
+      <input type="text" name="name" value="{{ campaign.name if campaign else '' }}"
+             class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+             placeholder="Summer Sale Blitz">
+    </div>
+    <div>
+      <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Campaign Type</label>
+      <select name="type"
+              class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md">
+        <option value="voice" {{ 'selected' if campaign and campaign.type == 'voice' }}>Voice</option>
+        <option value="sms" {{ 'selected' if campaign and campaign.type == 'sms' }}>SMS</option>
+        <option value="email" {{ 'selected' if campaign and campaign.type == 'email' }}>Email</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Contact List</label>
+      <select name="contact_list_id"
+              class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md">
+        <option value="">— Select a contact list —</option>
+        {% for cl in contact_lists %}
+        <option value="{{ cl.id }}" {{ 'selected' if campaign and campaign.contact_list_id == cl.id }}>{{ cl.name }} ({{ cl.contact_count }} contacts)</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Concurrent Calls</label>
+      <input type="number" name="concurrent_calls" value="{{ campaign.settings.concurrent_calls if campaign and campaign.settings else 5 }}"
+             class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md" min="1" max="100">
+    </div>
+    <div>
+      <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Retry Attempts</label>
+      <input type="number" name="retry_attempts" value="{{ campaign.settings.retry_attempts if campaign and campaign.settings else 2 }}"
+             class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md" min="0" max="10">
+    </div>
+  </div>
+
+  {% elif step == 2 %}
+  {# VERIFY step #}
+  <h3 class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-widest mb-4">Step 2 — Verify</h3>
+  <p class="text-body-md text-body-md text-outline mb-4">Review the readiness checks before launching.</p>
+
+  {% if readiness %}
+  <div class="space-y-2">
+    {% for check in readiness.checks %}
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-[20px] {{ 'text-status-green' if check.passed else 'text-status-red' }}">
+        {{ 'check_circle' if check.passed else 'cancel' }}
+      </span>
+      <span class="font-body-md text-body-md {{ 'text-on-surface' if check.passed else 'text-status-red' }}">{{ check.label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-4 p-3 rounded border
+    {{ 'border-status-green bg-status-green/10' if readiness.all_passed else 'border-status-red bg-status-red/10' }}">
+    <p class="font-label-md text-label-md {{ 'text-status-green' if readiness.all_passed else 'text-status-red' }}">
+      {{ '✅ All checks passed — ready to launch!' if readiness.all_passed else '❌ Some checks failed — review and fix before launching.' }}
+    </p>
+  </div>
+
+  {% if not readiness.all_passed %}
+  <div class="mt-4">
+    <a href="{{ url_for('campaigns.campaign_prepare', campaign_id=campaign.id) }}"
+       class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">
+      Re-run Checks
+    </a>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <p class="text-body-md text-body-md text-outline">Run the readiness check first.</p>
+  {% endif %}
+
+  {% elif step == 3 %}
+  {# LAUNCH step #}
+  <h3 class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-widest mb-4">Step 3 — Launch</h3>
+  <p class="text-body-md text-body-md text-outline mb-4">Confirm and start your campaign.</p>
+
+  <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 mb-4">
+    <h4 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-2">Launch Summary</h4>
+    <dl class="space-y-1 text-body-md">
+      {% if campaign %}
+      <dt class="text-outline">Campaign</dt>
+      <dd class="text-on-surface font-bold">{{ campaign.name }}</dd>
+      <dt class="text-outline">Type</dt>
+      <dd class="text-on-surface">{{ campaign.type | upper }}</dd>
+      {% endif %}
+      {% if readiness %}
+      <dt class="text-outline">Contacts</dt>
+      <dd class="text-on-surface">{{ readiness.contacts_loaded | default('—') }}</dd>
+      <dt class="text-outline">Readiness</dt>
+      <dd class="text-on-surface">{{ '✅ Passed' if readiness.all_passed else '❌ Failed' }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+
+  <form method="POST" action="{{ url_for('campaigns.campaign_launch', campaign_id=campaign.id) }}">
+    <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-green px-6 py-3 rounded hover:opacity-80 transition-opacity font-bold">
+      🚀 LAUNCH CAMPAIGN
+    </button>
+  </form>
+
+  {% elif step == 4 %}
+  {# LIVE step #}
+  <h3 class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-widest mb-4">Step 4 — Live</h3>
+  <p class="text-body-md text-body-md text-outline mb-4">Monitor your campaign in real time.</p>
+
+  <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 mb-4">
+    <p class="text-body-md text-body-md text-on-surface">Your campaign is now <span class="font-bold text-status-green">LIVE</span>.</p>
+    <p class="text-body-md text-body-md text-outline mt-1">Watch the Mission Control dashboard for real-time updates.</p>
+  </div>
+
+  <a href="{{ url_for('ui.mission_control', campaign_id=campaign.id) }}"
+     class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">
+    📡 Open Mission Control
+  </a>
+
+  {% elif step == 5 %}
+  {# FINISH step #}
+  <h3 class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-widest mb-4">Step 5 — Finish</h3>
+  <p class="text-body-md text-body-md text-outline mb-4">Your campaign has completed.</p>
+
+  <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 mb-4">
+    <h4 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-2">Results</h4>
+    <dl class="space-y-1 text-body-md">
+      {% if run %}
+      <dt class="text-outline">Total Calls</dt>
+      <dd class="text-on-surface font-bold">{{ run.total_calls }}</dd>
+      <dt class="text-outline">Answered</dt>
+      <dd class="text-on-surface">{{ run.success_count }}</dd>
+      <dt class="text-outline">Press 1 (Conversions)</dt>
+      <dd class="text-on-surface">{{ run.conversion_count }}</dd>
+      <dt class="text-outline">Failed</dt>
+      <dd class="text-on-surface">{{ run.failed_count }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+
+  <a href="{{ url_for('campaigns.campaign_report', campaign_id=campaign.id) }}"
+     class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">
+    📊 View Full Report
+  </a>
+
+  {% endif %}
+</div>
+
+{# Navigation #}
+<div class="flex items-center justify-between mt-4">
+  {% if step > 1 %}
+  <a href="{{ url_for('ui.campaign_wizard', campaign_id=campaign.id, step=step-1) }}"
+     class="font-label-md text-label-md uppercase tracking-wider text-outline hover:text-primary transition-colors">← Previous</a>
+  {% endif %}
+  {% if step < 5 %}
+  <a href="{{ url_for('ui.campaign_wizard', campaign_id=campaign.id, step=step+1) }}"
+     class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">Next →</a>
+  {% endif %}
+</div>
+{% endblock %}
