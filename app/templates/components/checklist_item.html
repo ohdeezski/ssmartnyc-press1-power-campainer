@@ -1,0 +1,13 @@
+{# checklist_item.html — pre-flight checklist row. Params: label, done (bool),
+   detail (optional sub-line). #}
+<div class="flex items-start gap-3 py-2">
+  {% if done %}
+  <span class="material-symbols-outlined text-[18px] text-status-green mt-0.5">check_circle</span>
+  {% else %}
+  <span class="material-symbols-outlined text-[18px] text-outline mt-0.5">radio_button_unchecked</span>
+  {% endif %}
+  <div class="flex-1">
+    <p class="text-body-md text-body-md text-on-surface">{{ label }}</p>
+    {% if detail is defined and detail %}<p class="text-label-sm text-label-sm text-outline">{{ detail }}</p>{% endif %}
+  </div>
+</div>

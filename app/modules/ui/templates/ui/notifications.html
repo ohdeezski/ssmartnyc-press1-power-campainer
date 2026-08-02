@@ -1,0 +1,41 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Notifications</h2>
+    <p class="text-body-md text-body-md text-outline mt-1">System and campaign alerts for your operator account.</p>
+  </div>
+  {% if notifications %}
+  <button data-notif-read-all class="font-label-md text-label-md uppercase tracking-wider text-primary border border-primary/50 px-3 py-1.5 rounded hover:bg-primary/10 transition-colors">Mark all read</button>
+  {% endif %}
+</div>
+
+{% if notifications %}
+<div class="bg-surface border border-primary/40 rounded-xl overflow-hidden">
+  <div class="divide-y divide-outline-variant/30">
+    {% for n in notifications %}
+    <div class="px-4 py-4 flex items-start gap-4 {% if not n.read %}bg-primary/5{% endif %}">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          {% set status = {'success': 'running', 'warning': 'waiting', 'error': 'failed', 'info': 'connecting'}.get(n.type, 'connecting') %}
+          {% set label = n.type|upper %}
+          {% include "components/status_badge.html" %}
+          <h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">{{ n.title }}</h4>
+        </div>
+        <p class="text-body-md text-body-md text-outline">{{ n.message }}</p>
+        <p class="font-mono text-label-sm text-label-sm text-outline mt-1">{{ n.created_at.strftime('%Y-%m-%d %H:%M') if n.created_at else '—' }}</p>
+      </div>
+      {% if not n.read %}
+      <button data-notif-read="{{ n.id }}" class="material-symbols-outlined text-[18px] text-outline hover:text-primary transition-colors shrink-0" title="Mark read">done</button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="bg-surface border border-primary/40 rounded-xl">
+  {% set icon = 'notifications' %}{% set title = 'Inbox clear' %}{% set message = 'No notifications. Campaign events and system alerts will land here.' %}
+  {% include "components/empty_state.html" %}
+</div>
+{% endif %}
+{% endblock %}

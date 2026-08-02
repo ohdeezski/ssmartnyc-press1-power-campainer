@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>57R337 $M4R7 NYC</title>
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="icon" href="{{ url_for('static', filename='brand/favicon.svg') }}" type="image/svg+xml">
+<style>
+    body {
+        background-color: #050505;
+        background-image: repeating-linear-gradient(
+            0deg, transparent, transparent 1px,
+            rgba(28, 239, 255, 0.03) 1px, rgba(28, 239, 255, 0.03) 2px);
+        background-size: 100% 2px;
+        font-family: 'Inter', sans-serif; color: #e0e3e8;
+    }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .scanline-overlay {
+        pointer-events: none; position: fixed; inset: 0; width: 100%; height: 100%;
+        background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%),
+                    linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+        background-size: 100% 4px, 3px 100%; opacity: 0.1; z-index: 9999;
+    }
+    .pulse-dot { animation: pulse 1.5s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.1); } }
+    .scroll-hide::-webkit-scrollbar { display: none; }
+    .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    background: "#101418", surface: "#101418",
+                    "surface-container-lowest": "#0b0f12", "surface-container-low": "#181c20",
+                    "surface-container-high": "#262a2f", "surface-container-highest": "#31353a",
+                    "surface-variant": "#31353a", "surface-dim": "#101418",
+                    "on-surface": "#e0e3e8", "on-surface-variant": "#bac9cc",
+                    outline: "#849396", "outline-variant": "#3b494c",
+                    primary: "#00e5ff", "primary-container": "#00e5ff",
+                    "primary-fixed": "#9cf0ff", "primary-fixed-dim": "#1CEFFF",
+                    "on-primary": "#00363d", "on-primary-container": "#00626e",
+                    secondary: "#d1bcff", "secondary-container": "#6b07ef",
+                    "on-secondary-container": "#d7c4ff", "tertiary": "#b7f8ff",
+                    "on-error": "#690005", error: "#ffb4ab",
+                    /* status legend — 9 campaign states (BRAND_SYSTEM.md §3) */
+                    status: {
+                        gray: "#6B7280", blue: "#4DA6FF", cyan: "#00D4FF",
+                        green: "#00FF99", yellow: "#FFAA00", orange: "#FF8800",
+                        purple: "#7B2EFF", red: "#FF3366", white: "#FFFFFF"
+                    }
+                },
+                borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "9999px" },
+                spacing: { "margin-page": "24px", "panel-padding": "12px", unit: "4px", gutter: "16px" },
+                fontFamily: {
+                    "headline-lg": ["Inter"], "headline-md": ["Inter"], "headline-sm": ["Inter"],
+                    "body-md": ["Inter"], "label-md": ["Inter"], "label-sm": ["Inter"], "code-sm": ["Inter"],
+                    mono: ["JetBrains Mono", "Courier New", "monospace"]
+                },
+                fontSize: {
+                    "headline-lg": ["1.5rem","2rem"], "headline-md": ["1.25rem","1.75rem"],
+                    "headline-sm": ["1.125rem","1.5rem"], "body-md": ["0.875rem","1.25rem"],
+                    "label-md": ["0.75rem","1rem"], "label-sm": ["0.7rem","1rem"], "code-sm": ["0.75rem","1rem"]
+                }
+            }
+        }
+    };
+</script>
+</head>
+<body class="text-on-surface overflow-x-hidden">
+<div class="scanline-overlay"></div>
+
+<header class="bg-background fixed top-0 w-full h-16 border-b border-primary z-50 flex justify-between items-center px-margin-page">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('ui.dashboard') }}" class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase hover:text-primary-fixed-dim">
+            57R337 $M4R7 NYC
+        </a>
+        <div class="h-4 w-px bg-outline-variant mx-2"></div>
+        {% include "components/status_ribbon.html" %}
+    </div>
+    <div class="flex items-center gap-6">
+        <a href="{{ url_for('ui.notifications_page') }}"
+           class="relative flex items-center justify-center w-9 h-9 text-primary hover:text-primary-fixed-dim transition-colors"
+           aria-label="Notifications" title="Notifications">
+            <span class="material-symbols-outlined text-[20px]">notifications</span>
+            {% if unread_count is defined and unread_count and unread_count > 0 %}
+            <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-status-red text-background text-[10px] font-bold flex items-center justify-center font-mono">{{ unread_count if unread_count < 100 else '99+' }}</span>
+            {% endif %}
+        </a>
+        <div class="flex items-center gap-2 text-primary font-label-md">
+            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">terminal</span>
+            <span>{{ user.name if user else 'OPERATOR' }}</span>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="font-headline-sm text-headline-sm text-outline hover:text-primary transition-colors uppercase tracking-widest">Log Out</a>
+    </div>
+</header>
+
+<nav class="bg-surface fixed top-16 w-full h-10 border-b border-outline-variant z-40">
+    <div class="flex items-center w-full max-w-[1280px] mx-auto px-margin-page h-full">
+        <div class="flex h-full">
+            <a class="text-label-md uppercase transition-all px-4 h-full flex items-center
+                      {{ 'text-primary border-b-2 border-primary bg-primary/5' if request.endpoint in ('ui.dashboard',) else 'text-outline hover:bg-surface-container-high hover:text-primary' }}"
+               href="{{ url_for('ui.dashboard') }}">Dashboard</a>
+            <a class="text-label-md uppercase transition-all px-4 h-full flex items-center
+                      {{ 'text-primary border-b-2 border-primary bg-primary/5' if request.endpoint == 'ui.upload_center' else 'text-outline hover:bg-surface-container-high hover:text-primary' }}"
+               href="{{ url_for('ui.upload_center') }}">Upload Center</a>
+            <a class="text-label-md uppercase transition-all px-4 h-full flex items-center
+                      {{ 'text-primary border-b-2 border-primary bg-primary/5' if request.endpoint == 'ui.provider_center' else 'text-outline hover:bg-surface-container-high hover:text-primary' }}"
+               href="{{ url_for('ui.provider_center') }}">Providers</a>
+            <a class="text-label-md uppercase transition-all px-4 h-full flex items-center
+                      {{ 'text-primary border-b-2 border-primary bg-primary/5' if request.endpoint and request.endpoint.startswith('campaigns.') else 'text-outline hover:bg-surface-container-high hover:text-primary' }}"
+               href="{{ url_for('campaigns.campaign_list') }}">Campaigns</a>
+            <a class="text-label-md uppercase transition-all px-4 h-full flex items-center
+                      {{ 'text-primary border-b-2 border-primary bg-primary/5' if request.endpoint == 'ui.notifications_page' else 'text-outline hover:bg-surface-container-high hover:text-primary' }}"
+               href="{{ url_for('ui.notifications_page') }}">Notifications</a>
+            <a class="text-label-md uppercase transition-all px-4 h-full flex items-center
+                      {{ 'text-primary border-b-2 border-primary bg-primary/5' if request.endpoint == 'ui.settings_page' else 'text-outline hover:bg-surface-container-high hover:text-primary' }}"
+               href="{{ url_for('ui.settings_page') }}">Settings</a>
+        </div>
+    </div>
+</nav>
+
+<main class="mt-32 max-w-[1280px] mx-auto px-margin-page pb-12">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="border rounded p-3 mb-4 font-label-md text-label-md uppercase tracking-wider
+                    {{ 'border-status-green text-status-green' if category == 'success' else 'border-status-red text-status-red' if category == 'danger' else 'border-status-yellow text-status-yellow' }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+
+{% include "components/toast.html" %}
+
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{# data_table.html — generic data table. Params: columns (list of dicts with
+   label, align), rows (list of lists of HTML strings), empty_text. #}
+{% if rows %}
+<div class="bg-surface border border-primary/40 rounded-xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-lowest border-b border-outline-variant">
+          {% for col in columns %}
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider whitespace-nowrap {{ col.align|default('') }}">{{ col.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/30">
+        {% for row in rows %}
+        <tr class="hover:bg-primary/5 transition-colors">
+          {% for cell in row %}
+          <td class="px-4 py-3 text-body-md text-body-md text-on-surface whitespace-nowrap">{{ cell|safe }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="bg-surface border border-primary/40 rounded-xl p-8 text-center">
+  <p class="text-body-md text-body-md text-outline">{{ empty_text|default('Nothing here yet.') }}</p>
+</div>
+{% endif %}

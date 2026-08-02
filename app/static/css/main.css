@@ -1,0 +1,199 @@
+/* 57R337 $M4R7 NYC — Main Stylesheet (BRAND_SYSTEM.md canonical tokens)
+   NOTE: tokens here MUST match docs/BRAND_SYSTEM.md and base.html <Tailwind config>.
+   Any new hex goes in BRAND_SYSTEM.md FIRST, then here + Android theme. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* surfaces */
+  --bg-primary: #050505;
+  --bg-card:    #101418;
+  /* lines */
+  --border:     #1CEFFF;
+  /* brand */
+  --accent:     #00E5FF;   /* primary cyan */
+  --accent-2:   #7B2EFF;   /* purple secondary */
+  /* status */
+  --success:    #00FF99;
+  --warning:    #FFAA00;
+  --danger:     #FF3366;
+  /* text */
+  --text-1:     #E0E3E8;
+  --text-2:     #888;
+  --text-3:     #555;
+  /* status legend (9 campaign states — BRAND_SYSTEM.md §3) */
+  --status-gray:   #6B7280;
+  --status-blue:   #4DA6FF;
+  --status-cyan:   #00D4FF;
+  --status-green:  #00FF99;
+  --status-yellow: #FFAA00;
+  --status-orange: #FF8800;
+  --status-purple: #7B2EFF;
+  --status-red:    #FF3366;
+  --status-white:  #FFFFFF;
+  /* spacing (BRAND_SYSTEM.md §6) */
+  --space-unit:   4px;
+  --space-gutter: 16px;
+  --space-panel:  12px;
+  --space-page:   24px;
+  /* radius (BRAND_SYSTEM.md §6) */
+  --radius-sm:    2px;
+  --radius-lg:    4px;
+  --radius-xl:    8px;
+  --radius-full:  9999px;
+  /* type (BRAND_SYSTEM.md §4) */
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+h1 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+h2 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+
+/* mono for data/IDs/counts (BRAND_SYSTEM.md §4) */
+code, .mono { font-family: var(--font-mono); }
+
+/* card (token-driven twin of Tailwind .card in base.html) */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-family: 'Inter', sans-serif;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+/* status text helpers (9 states — hexes in :root, BRAND_SYSTEM.md §3) */
+.status-gray  { color: var(--status-gray); }
+.status-blue  { color: var(--status-blue); }
+.status-cyan  { color: var(--status-cyan); }
+.status-green { color: var(--status-green); }
+.status-yellow{ color: var(--status-yellow); }
+.status-orange{ color: var(--status-orange); }
+.status-purple{ color: var(--status-purple); }
+.status-red   { color: var(--status-red); }
+.status-white { color: var(--status-white); }
+
+/* buttons (token-driven action buttons) */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--accent); color: var(--bg-primary); }
+.btn-danger  { border-color: var(--danger);  color: var(--danger); }
+.btn-danger:hover  { background: var(--danger);  color: var(--bg-primary); }
+.btn-success { border-color: var(--success); color: var(--success); }
+.btn-success:hover { background: var(--success); color: var(--bg-primary); }
+
+.progress-bar { height: 8px; background: #1a1a2e; border-radius: 4px; overflow: hidden; margin: 0.5rem 0; }
+.progress-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+
+.badge {
+  display: inline-block; padding: 0.2rem 0.5rem; border-radius: 2px;
+  font-size: 0.75rem; font-family: 'Inter', sans-serif; text-transform: uppercase;
+}
+.badge-success { background: #003322; color: var(--success); border: 1px solid var(--success); }
+.badge-warning { background: #332200; color: var(--warning); border: 1px solid var(--warning); }
+.badge-danger  { background: #330011; color: var(--danger);  border: 1px solid var(--danger); }
+.badge-info    { background: #001a33; color: var(--accent);  border: 1px solid var(--accent); }
+
+.toast {
+  position: fixed; bottom: 1rem; right: 1rem; padding: 0.75rem 1rem;
+  border-radius: 4px; border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text-1); z-index: 1000; animation: slideIn 0.3s ease;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.alert { padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; }
+.alert-info    { background: #001a33; border: 1px solid var(--accent);  color: var(--accent); }
+.alert-warning { background: #332200; border: 1px solid var(--warning); color: var(--warning); }
+.alert-danger  { background: #330011; border: 1px solid var(--danger);  color: var(--danger); }
+.alert-success { background: #003322; border: 1px solid var(--success); color: var(--success); }
+
+.nav-sidebar {
+  width: 250px; background: var(--bg-card); border-right: 1px solid var(--border);
+  min-height: 100vh; padding: 1rem; position: fixed; left: 0; top: 0; bottom: 0; overflow-y: auto;
+}
+.nav-section { margin-bottom: 1rem; }
+.nav-section-title {
+  font-family: 'Inter', sans-serif; color: var(--text-3); font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;
+  padding: 0.25rem 0; border-bottom: 1px solid #1a1a2e;
+}
+.nav-item {
+  display: block; padding: 0.4rem 0.75rem; color: var(--text-1);
+  text-decoration: none; font-size: 0.85rem; border-radius: 2px; transition: all 0.15s;
+}
+.nav-item:hover { color: var(--accent); background: rgba(0, 229, 255, 0.05); }
+.nav-item.active { color: var(--accent); border-left: 2px solid var(--accent); }
+
+.main-content { margin-left: 250px; padding: 1.5rem; min-height: 100vh; }
+
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: 4px; padding: 2rem;
+  text-align: center; transition: all 0.15s; cursor: pointer;
+}
+.upload-zone:hover { border-color: var(--accent); background: rgba(0, 229, 255, 0.03); }
+.upload-zone.dragover { border-color: var(--accent); background: rgba(0, 229, 255, 0.08); }
+
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #1a1a2e; }
+.table th { font-family: 'Inter', sans-serif; color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.table tr:hover { background: rgba(0, 229, 255, 0.03); }
+
+.form-group { margin-bottom: 1rem; }
+.form-label {
+  display: block; font-size: 0.8rem; color: var(--text-2); margin-bottom: 0.25rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.form-input {
+  width: 100%; padding: 0.5rem 0.75rem; background: var(--bg-primary);
+  border: 1px solid #1a1a2e; color: var(--text-1); border-radius: 2px; font-size: 0.9rem;
+}
+.form-input:focus { outline: none; border-color: var(--accent); }
+.form-input.error { border-color: var(--danger); }
+.error-message   { color: var(--danger);  font-size: 0.75rem; margin-top: 0.25rem; }
+.success-message { color: var(--success); font-size: 0.75rem; margin-top: 0.25rem; }
+
+/* Scanline overlay (decorative, matches base.html .scanline-overlay) */
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.01) 2px, rgba(0,229,255,0.01) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* subtle neon glow on headings (twin of base.html style) */
+h1, h2, h3 { text-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }

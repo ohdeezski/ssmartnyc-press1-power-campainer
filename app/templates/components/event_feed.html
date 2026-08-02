@@ -1,0 +1,21 @@
+{# event_feed.html — live activity log. Params: events (list of dicts with
+   time, text, color (status hue key)), title (optional). #}
+<div class="bg-surface border border-primary/40 rounded-xl p-4">
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest">{{ title|default('Live Event Feed') }}</h3>
+    <span class="w-2 h-2 rounded-full bg-status-green pulse-dot"></span>
+  </div>
+  {% if events %}
+  <ul class="space-y-2 max-h-72 overflow-y-auto scroll-hide">
+    {% for ev in events %}
+    <li class="flex items-start gap-2 text-body-md text-body-md">
+      <span class="mt-1 w-2 h-2 rounded-full shrink-0 bg-status-{{ ev.color|default('cyan') }}"></span>
+      <span class="font-mono text-label-sm text-label-sm text-outline shrink-0">{{ ev.time|default('') }}</span>
+      <span class="text-on-surface">{{ ev.text }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-body-md text-body-md text-outline">No events yet.</p>
+  {% endif %}
+</div>

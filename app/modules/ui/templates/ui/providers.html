@@ -1,0 +1,19 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="mb-6">
+  <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Provider Center</h2>
+  <p class="text-body-md text-body-md text-outline mt-1">Connect the phone lines and messaging lanes your campaigns dial out on.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  {% set title = 'Voice / SIP' %}{% set icon = 'call' %}{% set description = 'Asterisk, Twilio, Telnyx, Flowroute, Skyetel, Generic SIP. Powers press-1 voice campaigns.' %}
+  {% include "components/setup_card.html" %}
+  {% set title = 'Messaging' %}{% set icon = 'chat' %}{% set description = 'Twilio SMS, SMTP, SendGrid, Mailgun, Google, Microsoft, Meta, Telegram.' %}
+  {% include "components/setup_card.html" %}
+</div>
+
+<div class="bg-surface border border-primary/40 rounded-xl">
+  {% set icon = 'link_off' %}{% set title = 'No providers configured' %}{% set message = 'Provider connections arrive with the dialer engine. Every channel here stays "Not configured" until a real connection is established and tested.' %}
+  {% include "components/empty_state.html" %}
+</div>
+{% endblock %}

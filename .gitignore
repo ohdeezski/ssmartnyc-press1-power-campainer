@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+*.db
+*.sqlite3
+uploads/
+exports/
+logs/
+app/logs/
+config/providers/*
+!config/providers/.gitkeep
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Docker / TLS material
+ssl/
+
+# Local IDE / OS cruft
+.idea/
+.vscode/
+.DS_Store

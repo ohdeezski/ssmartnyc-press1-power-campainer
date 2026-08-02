@@ -1,0 +1,25 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+  <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Report — {{ campaign.name }}</h2>
+  <a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign.id) }}"
+     class="text-label-md text-label-md text-outline hover:text-primary transition-colors uppercase tracking-wider">Back to campaign</a>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {% set results = campaign.results or {} %}
+  {% set label = 'Contacts' %}{% set value = results.get('total_contacts', 0) %}{% set icon = 'contact_phone' %}{% set tone = 'cyan' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Delivered' %}{% set value = results.get('success_count', 0) %}{% set icon = 'check_circle' %}{% set tone = 'green' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Failed' %}{% set value = results.get('failed_count', 0) %}{% set icon = 'cancel' %}{% set tone = 'red' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Conversions' %}{% set value = results.get('conversion_count', 0) %}{% set icon = 'touch_app' %}{% set tone = 'purple' %}
+  {% include "components/stat_card.html" %}
+</div>
+
+<div class="bg-surface border border-primary/40 rounded-xl p-6">
+  <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-3">Raw Results</h3>
+  <pre class="font-mono text-label-sm text-on-surface overflow-auto">{{ results | tojson(indent=2) }}</pre>
+</div>
+{% endblock %}

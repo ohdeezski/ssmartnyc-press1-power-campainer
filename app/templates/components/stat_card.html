@@ -1,0 +1,10 @@
+{# stat_card.html — KPI tile. Params: label, value, icon (Material Symbol),
+   tone (status hue for the icon, default cyan), sub (optional caption). #}
+<div class="bg-surface border border-primary/40 rounded-xl p-4">
+  <div class="flex items-center justify-between mb-2">
+    <span class="font-label-md text-label-md text-outline uppercase tracking-wider">{{ label }}</span>
+    <span class="material-symbols-outlined text-[20px] text-status-{{ tone|default('cyan') }}">{{ icon|default('data_usage') }}</span>
+  </div>
+  <p class="font-mono text-headline-lg text-headline-lg font-bold text-on-surface">{{ value }}</p>
+  {% if sub is defined and sub %}<p class="text-label-sm text-label-sm text-outline mt-1">{{ sub }}</p>{% endif %}
+</div>

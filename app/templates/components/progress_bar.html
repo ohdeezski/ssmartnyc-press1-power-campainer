@@ -1,0 +1,13 @@
+{# progress_bar.html — labeled horizontal bar. Params: percent (0-100), label,
+   value (right-side text), bar_color (tailwind bg class, default bg-status-cyan). #}
+<div class="w-full">
+  {% if (label is defined and label) or (value is defined and value) %}
+  <div class="flex items-center justify-between mb-1">
+    {% if label is defined and label %}<span class="font-label-md text-label-md text-outline uppercase tracking-wider">{{ label }}</span>{% endif %}
+    {% if value is defined and value %}<span class="font-mono text-label-md text-label-md text-primary">{{ value }}</span>{% endif %}
+  </div>
+  {% endif %}
+  <div class="h-2 bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant/30">
+    <div class="h-full rounded-full transition-all duration-500 {{ bar_color|default('bg-status-cyan') }}" style="width: {{ percent|default(0) }}%"></div>
+  </div>
+</div>

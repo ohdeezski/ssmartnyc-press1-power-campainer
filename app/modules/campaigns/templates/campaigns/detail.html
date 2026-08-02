@@ -1,0 +1,85 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="flex justify-between items-start mb-6">
+  <div>
+    <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">{{ campaign.name }}</h2>
+    <p class="text-label-md text-label-md text-outline mt-1">
+      <span class="uppercase text-status-purple">{{ campaign.type }}</span>
+      &middot;
+      <span class="text-{{ 'status-green' if campaign.status == 'running'
+                          else 'status-yellow' if campaign.status == 'paused'
+                          else 'outline' }}">{{ campaign.status }}</span>
+    </p>
+  </div>
+  <div class="flex gap-2">
+    {% if campaign.status != 'running' %}
+    <form method="POST" action="{{ url_for('campaigns.campaign_launch', campaign_id=campaign.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-status-green px-4 py-2 rounded hover:opacity-90 transition-opacity">Launch</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('campaigns.campaign_pause', campaign_id=campaign.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">Pause</button>
+    </form>
+    {% endif %}
+    <form method="POST" action="{{ url_for('campaigns.campaign_stop', campaign_id=campaign.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-status-red border border-status-red/50 px-4 py-2 rounded hover:bg-status-red/10 transition-colors">Stop</button>
+    </form>
+    <a href="{{ url_for('campaigns.campaign_edit', campaign_id=campaign.id) }}"
+       class="px-4 py-2 text-outline hover:text-primary transition-colors uppercase tracking-wider text-label-md">Edit</a>
+    <a href="{{ url_for('campaigns.campaign_report', campaign_id=campaign.id) }}"
+       class="px-4 py-2 text-outline hover:text-primary transition-colors uppercase tracking-wider text-label-md">Report</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-surface border border-primary/40 rounded-xl p-4">
+    <p class="text-label-md text-label-md text-outline uppercase tracking-wider">Created</p>
+    <p class="font-mono text-headline-sm text-headline-sm text-primary mt-1">{{ campaign.created_at.strftime('%Y-%m-%d %H:%M') if campaign.created_at else '—' }}</p>
+  </div>
+  <div class="bg-surface border border-primary/40 rounded-xl p-4">
+    <p class="text-label-md text-label-md text-outline uppercase tracking-wider">Started</p>
+    <p class="font-mono text-headline-sm text-headline-sm text-primary mt-1">{{ campaign.started_at.strftime('%Y-%m-%d %H:%M') if campaign.started_at else '—' }}</p>
+  </div>
+  <div class="bg-surface border border-primary/40 rounded-xl p-4">
+    <p class="text-label-md text-label-md text-outline uppercase tracking-wider">Finished</p>
+    <p class="font-mono text-headline-sm text-headline-sm text-primary mt-1">{{ campaign.finished_at.strftime('%Y-%m-%d %H:%M') if campaign.finished_at else '—' }}</p>
+  </div>
+</div>
+
+<h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-3">Runs</h3>
+{% if runs %}
+<div class="bg-surface border border-primary/40 rounded-xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-lowest border-b border-outline-variant">
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">#</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Contacts</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Success</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Failed</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Conversions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/30">
+        {% for run in runs %}
+        <tr class="hover:bg-primary/5 transition-colors">
+          <td class="px-4 py-3 font-mono text-primary">{{ run.run_number }}</td>
+          <td class="px-4 py-3">{% set status = run.status %}{% include "components/status_badge.html" %}</td>
+          <td class="px-4 py-3 text-center font-mono">{{ run.total_contacts }}</td>
+          <td class="px-4 py-3 text-center font-mono text-status-green">{{ run.success_count }}</td>
+          <td class="px-4 py-3 text-center font-mono text-status-red">{{ run.failed_count }}</td>
+          <td class="px-4 py-3 text-center font-mono text-status-purple">{{ run.conversion_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="bg-surface border border-primary/40 rounded-xl p-6 text-center text-outline">No runs recorded yet.</div>
+{% endif %}
+{% endblock %}

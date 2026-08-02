@@ -1,0 +1,22 @@
+{# stepper.html — 6-stage campaign lifecycle indicator. Params: steps (list of
+   dicts with label, state: done/current/upcoming). #}
+<ol class="flex items-center w-full">
+  {% for step in steps %}
+  {% set _state = step.state|default('upcoming') %}
+  <li class="flex items-center">
+    <span class="flex items-center gap-2">
+      {% if _state == 'done' %}
+      <span class="w-6 h-6 rounded-full bg-status-green text-background flex items-center justify-center"><span class="material-symbols-outlined text-[14px]">check</span></span>
+      {% elif _state == 'current' %}
+      <span class="w-6 h-6 rounded-full bg-status-cyan text-background flex items-center justify-center font-mono text-[11px] font-bold pulse-dot">{{ loop.index }}</span>
+      {% else %}
+      <span class="w-6 h-6 rounded-full border border-outline-variant text-outline flex items-center justify-center font-mono text-[11px]">{{ loop.index }}</span>
+      {% endif %}
+      <span class="font-label-md text-label-md uppercase tracking-wider {% if _state == 'upcoming' %}text-outline{% else %}text-primary{% endif %}">{{ step.label }}</span>
+    </span>
+    {% if not loop.last %}
+    <span class="w-10 md:w-16 h-px mx-3 {% if _state == 'done' %}bg-status-green{% else %}bg-outline-variant{% endif %}"></span>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>

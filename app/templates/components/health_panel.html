@@ -1,0 +1,23 @@
+{# health_panel.html — live host telemetry. Params: items (list of dicts with
+   label, key, bar_color). JS updates [data-metric-bar]/[data-metric-value] and
+   [data-metric-link] in real time (app.js). #}
+<div class="bg-surface border border-primary/40 rounded-xl p-4">
+  <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-4">System Health</h3>
+  <div class="space-y-4">
+    {% for item in items %}
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <span class="font-label-md text-label-md text-outline uppercase tracking-wider">{{ item.label }}</span>
+        <span class="font-mono text-label-md text-label-md text-primary" data-metric-value="{{ item.key }}">--%</span>
+      </div>
+      <div class="h-1.5 bg-surface-container-lowest rounded-full overflow-hidden border border-outline-variant/30">
+        <div class="h-full rounded-full {{ item.bar_color|default('bg-status-cyan') }} transition-all duration-500" data-metric-bar="{{ item.key }}" style="width: 0%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/40">
+    <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Link</span>
+    <span class="font-mono text-label-sm text-label-sm text-status-green" data-metric-link>connecting…</span>
+  </div>
+</div>

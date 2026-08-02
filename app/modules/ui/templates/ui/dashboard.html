@@ -1,0 +1,82 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="mb-6">
+  <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Mission Control</h2>
+  <p class="text-body-md text-body-md text-outline mt-1">Live overview of campaigns, infrastructure and operator activity.</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {% set label = 'Active Campaigns' %}{% set value = active_campaigns %}{% set icon = 'podcasts' %}{% set tone = 'green' %}{% set sub = total_campaigns ~ ' total' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Stored Files' %}{% set value = total_files %}{% set icon = 'folder_open' %}{% set tone = 'cyan' %}{% set sub = total_users ~ ' operator(s)' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Press-1 Conversions' %}{% set value = total_conversions %}{% set icon = 'touch_app' %}{% set tone = 'purple' %}{% set sub = total_runs ~ ' run(s)' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Unread Notifications' %}{% set value = unread_notifications %}{% set icon = 'notifications' %}{% set tone = 'yellow' %}{% set sub = workflows ~ ' workflow(s)' %}
+  {% include "components/stat_card.html" %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <div class="lg:col-span-2 bg-surface border border-primary/40 rounded-xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
+      <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest">Live Campaign Monitor</h3>
+      <a href="{{ url_for('campaigns.campaign_list') }}" class="font-label-md text-label-md text-outline hover:text-primary uppercase tracking-wider transition-colors">View all</a>
+    </div>
+    {% if campaigns %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-lowest border-b border-outline-variant">
+            <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Identifier</th>
+            <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Type</th>
+            <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Status</th>
+            <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Created</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/30">
+          {% for c in campaigns[:5] %}
+          <tr class="hover:bg-primary/5 transition-colors">
+            <td class="px-4 py-3">
+              <a href="{{ url_for('campaigns.campaign_detail', campaign_id=c.id) }}" class="font-bold text-primary hover:text-primary-fixed-dim">{{ c.name }}</a>
+            </td>
+            <td class="px-4 py-3 text-center"><span class="border border-primary/40 text-primary px-2 py-0.5 rounded text-[10px] uppercase">{{ c.type }}</span></td>
+            <td class="px-4 py-3 text-center">
+              {% set status = c.status %}{% include "components/status_badge.html" %}
+            </td>
+            <td class="px-4 py-3 text-outline font-mono">{{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-8">
+      {% set icon = 'podcasts' %}{% set title = 'No campaigns yet' %}{% set message = 'Create a campaign to watch live call progress here.' %}{% set action_url = url_for('campaigns.campaign_new') %}{% set action_text = 'NEW CAMPAIGN' %}
+      {% include "components/empty_state.html" %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="space-y-4">
+    {% set items = [{'label': 'CPU', 'key': 'cpu'}, {'label': 'RAM', 'key': 'ram'}, {'label': 'Disk', 'key': 'disk'}] %}
+    {% include "components/health_panel.html" %}
+
+    <div class="bg-surface border border-primary/40 rounded-xl p-4">
+      <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-3">Provider Status</h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-body-md text-body-md text-on-surface">Voice / SIP</span>
+          {% set status = 'not_started' %}{% set label = 'Not configured' %}{% include "components/status_badge.html" %}
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-body-md text-body-md text-on-surface">Messaging / SMS</span>
+          {% set status = 'not_started' %}{% set label = 'Not configured' %}{% include "components/status_badge.html" %}
+        </div>
+      </div>
+      <p class="text-label-sm text-label-sm text-outline mt-4">Provider connections arrive with the dialer engine.</p>
+    </div>
+  </div>
+</div>
+
+{% include "components/event_feed.html" %}
+{% endblock %}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — 57R337 $M4R7 NYC</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="icon" href="{{ url_for('static', filename='brand/favicon.svg') }}" type="image/svg+xml">
+<style>
+    body {
+        background-color: #050505;
+        background-image: repeating-linear-gradient(
+            0deg, transparent, transparent 1px,
+            rgba(28, 239, 255, 0.03) 1px, rgba(28, 239, 255, 0.03) 2px);
+        background-size: 100% 2px;
+        font-family: 'Inter', sans-serif; color: #e0e3e8;
+    }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .scanline-overlay {
+        pointer-events: none; position: fixed; inset: 0; width: 100%; height: 100%;
+        background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%),
+                    linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+        background-size: 100% 4px, 3px 100%; opacity: 0.1; z-index: 9999;
+    }
+</style>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    background: "#101418", surface: "#101418",
+                    "surface-container-lowest": "#0b0f12", "surface-container-low": "#181c20",
+                    "surface-container-high": "#262a2f", "surface-container-highest": "#31353a",
+                    "surface-variant": "#31353a", "surface-dim": "#101418",
+                    "on-surface": "#e0e3e8", "on-surface-variant": "#bac9cc",
+                    outline: "#849396", "outline-variant": "#3b494c",
+                    primary: "#00e5ff", "primary-container": "#00e5ff",
+                    "primary-fixed": "#9cf0ff", "primary-fixed-dim": "#1CEFFF",
+                    "on-primary": "#00363d", "on-primary-container": "#00626e",
+                    secondary: "#d1bcff", "secondary-container": "#6b07ef",
+                    "on-secondary-container": "#d7c4ff", "tertiary": "#b7f8ff",
+                    "on-error": "#690005", error: "#ffb4ab",
+                    status: {
+                        gray: "#6B7280", blue: "#4DA6FF", cyan: "#00D4FF",
+                        green: "#00FF99", yellow: "#FFAA00", orange: "#FF8800",
+                        purple: "#7B2EFF", red: "#FF3366", white: "#FFFFFF"
+                    }
+                },
+                borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "9999px" },
+                spacing: { "margin-page": "24px", "panel-padding": "12px", unit: "4px", gutter: "16px" },
+                fontFamily: {
+                    "headline-lg": ["Inter"], "headline-md": ["Inter"], "headline-sm": ["Inter"],
+                    "body-md": ["Inter"], "label-md": ["Inter"], "label-sm": ["Inter"], "code-sm": ["Inter"],
+                    mono: ["JetBrains Mono", "Courier New", "monospace"]
+                },
+                fontSize: {
+                    "headline-lg": ["1.5rem","2rem"], "headline-md": ["1.25rem","1.75rem"],
+                    "headline-sm": ["1.125rem","1.5rem"], "body-md": ["0.875rem","1.25rem"],
+                    "label-md": ["0.75rem","1rem"], "label-sm": ["0.7rem","1rem"], "code-sm": ["0.75rem","1rem"]
+                }
+            }
+        }
+    };
+</script>
+</head>
+<body class="flex items-center justify-center min-h-screen text-on-surface">
+<div class="scanline-overlay"></div>
+<div class="bg-surface border border-primary/40 rounded-xl p-8 w-full max-w-md">
+  <div class="flex items-center justify-center gap-3 mb-6">
+    <img src="{{ url_for('static', filename='brand/favicon.svg') }}" class="w-8 h-8" alt="Street Smart NYC">
+    <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">57R337 $M4R7 NYC</h1>
+  </div>
+  <h2 class="text-label-md text-label-md text-outline uppercase tracking-wider text-center mb-6">Create Account</h2>
+  <form method="POST">
+    {% if form %}{{ form.hidden_tag() }}{% endif %}
+
+    <div class="mb-4">
+      <label class="block text-label-md text-label-md text-outline mb-1 uppercase tracking-wider">Name</label>
+      <input type="text" name="name" required class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface focus:border-primary focus:outline-none">
+    </div>
+    <div class="mb-4">
+      <label class="block text-label-md text-label-md text-outline mb-1 uppercase tracking-wider">Email</label>
+      <input type="email" name="email" required class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface focus:border-primary focus:outline-none">
+    </div>
+    <div class="mb-4">
+      <label class="block text-label-md text-label-md text-outline mb-1 uppercase tracking-wider">Password</label>
+      <input type="password" name="password" required minlength="8" class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface focus:border-primary focus:outline-none">
+    </div>
+    <div class="mb-4">
+      <label class="block text-label-md text-label-md text-outline mb-1 uppercase tracking-wider">Confirm Password</label>
+      <input type="password" name="confirm" required class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface focus:border-primary focus:outline-none">
+    </div>
+    <button type="submit" class="w-full font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">REGISTER</button>
+  </form>
+  <p class="text-label-sm text-label-sm text-outline mt-4 text-center">Already have an account? <a href="{{ url_for('auth.login') }}" class="text-primary hover:text-primary-fixed-dim">Log In</a></p>
+</div>
+</body>
+</html>

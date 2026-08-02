@@ -1,0 +1,10 @@
+{# audio_row.html — audio asset line item. Params: name, format, size,
+   duration (optional). #}
+<div class="flex items-center gap-3 py-2">
+  <span class="material-symbols-outlined text-[20px] text-primary shrink-0">graphic_eq</span>
+  <div class="flex-1 min-w-0">
+    <p class="text-body-md text-body-md text-on-surface truncate">{{ name }}</p>
+    <p class="font-mono text-label-sm text-label-sm text-outline">{{ format|default('WAV') }} &middot; {{ size|default('—') }}{% if duration is defined and duration %} &middot; {{ duration }}{% endif %}</p>
+  </div>
+  <span class="material-symbols-outlined text-[18px] text-outline cursor-pointer hover:text-primary">play_circle</span>
+</div>

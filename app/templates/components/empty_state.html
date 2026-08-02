@@ -1,0 +1,12 @@
+{# empty_state.html — centered placeholder. Params: icon, title, message,
+   action_url (optional), action_text. #}
+<div class="flex flex-col items-center justify-center py-12 px-6 text-center">
+  <span class="material-symbols-outlined text-[44px] text-outline mb-3">{{ icon|default('inbox') }}</span>
+  <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface uppercase tracking-widest mb-1">{{ title }}</h3>
+  <p class="text-body-md text-body-md text-outline max-w-sm mb-5">{{ message }}</p>
+  {% if action_url %}
+  <a href="{{ action_url }}" class="inline-flex items-center gap-1 font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">
+    {{ action_text|default('GET STARTED') }}
+  </a>
+  {% endif %}
+</div>

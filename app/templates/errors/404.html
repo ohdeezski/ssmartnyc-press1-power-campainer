@@ -1,0 +1,9 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="flex flex-col items-center justify-center text-center py-24">
+    <span class="material-symbols-outlined text-primary/30 text-7xl mb-4">search_off</span>
+    <h1 class="font-headline-lg text-headline-lg text-primary tracking-widest uppercase">404 — Signal Lost</h1>
+    <p class="text-outline mt-3">The node you requested is not on the grid.</p>
+    <a href="{{ url_for('ui.dashboard') }}" class="mt-6 bg-primary text-background px-4 py-2 rounded font-label-md uppercase tracking-wider hover:bg-primary-fixed-dim">Return to Command</a>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{# status_badge.html — colored dot + uppercase label for a campaign/run state.
+   Params: status (state key, optional if color given), color (optional status
+   hue key: gray/blue/cyan/green/yellow/orange/purple/red/white), label (optional).
+   Status keys: not_started preparing connecting running waiting retrying
+   transferring failed finished. #}
+{% set _palette = {
+  'not_started': 'gray', 'preparing': 'blue', 'connecting': 'cyan',
+  'running': 'green', 'waiting': 'yellow', 'retrying': 'orange',
+  'transferring': 'purple', 'failed': 'red', 'finished': 'white'
+} %}
+{% set _color = color if color else _palette.get(status|default(''), 'gray') %}
+{% set _label = label if (label is defined and label) else (status|default('unknown')|replace('_', ' ')|upper) %}
+<span class="inline-flex items-center gap-1.5 border px-2 py-0.5 rounded-full font-label-sm text-label-sm uppercase tracking-wider bg-surface-container-lowest border-status-{{ _color }} text-status-{{ _color }}">
+  <span class="w-1.5 h-1.5 rounded-full bg-status-{{ _color }}"></span>{{ _label }}
+</span>

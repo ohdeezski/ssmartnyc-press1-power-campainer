@@ -1,0 +1,10 @@
+{# pipeline_bar.html — one stage of the call-flow pipeline. Params: name,
+   count, total, bar_color. Percent derived from count/total. #}
+{% set _pct = ((count|default(0) / total|default(0) * 100) | round | int) if total|default(0) else 0 %}
+<div class="flex items-center gap-3">
+  <span class="w-24 font-label-md text-label-md text-outline uppercase tracking-wider shrink-0">{{ name }}</span>
+  <div class="flex-1 h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+    <div class="h-full rounded-full {{ bar_color|default('bg-status-cyan') }} transition-all duration-500" style="width: {{ _pct }}%"></div>
+  </div>
+  <span class="w-16 text-right font-mono text-label-md text-label-md text-on-surface shrink-0">{{ count|default(0) }}</span>
+</div>

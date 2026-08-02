@@ -1,0 +1,28 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase mb-6">New Campaign</h2>
+
+<form method="POST" class="bg-surface border border-primary/40 rounded-xl p-6 max-w-2xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="mb-4">
+    <label class="block text-label-md text-label-md text-outline mb-1 uppercase tracking-wider">Campaign Name</label>
+    <input type="text" name="name" required class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface focus:border-primary focus:outline-none" placeholder="Spring Promo Press-1">
+  </div>
+  <div class="mb-6">
+    <label class="block text-label-md text-label-md text-outline mb-1 uppercase tracking-wider">Channel</label>
+    <select name="type" class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface focus:border-primary focus:outline-none">
+      <option value="voice">Voice (Press-1)</option>
+      <option value="sms">SMS</option>
+      <option value="email">Email</option>
+      <option value="whatsapp">WhatsApp</option>
+      <option value="telegram">Telegram</option>
+      <option value="multi">Multi-channel</option>
+    </select>
+  </div>
+  <div class="flex gap-3">
+    <button type="submit" class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">Create Campaign</button>
+    <a href="{{ url_for('campaigns.campaign_list') }}"
+       class="px-4 py-2 text-outline hover:text-primary transition-colors">Cancel</a>
+  </div>
+</form>
+{% endblock %}

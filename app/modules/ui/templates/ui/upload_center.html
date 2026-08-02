@@ -1,0 +1,89 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="mb-6">
+  <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Upload Center</h2>
+  <p class="text-body-md text-body-md text-outline mt-1">Stage the materials a campaign needs: contact lists and audio.</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+  {% set label = 'Stored Files' %}{% set value = total_files %}{% set icon = 'folder_open' %}{% set tone = 'cyan' %}
+  {% include "components/stat_card.html" %}
+  {% set label = 'Asset Entries' %}{% set value = total_assets %}{% set icon = 'library_music' %}{% set tone = 'purple' %}
+  {% include "components/stat_card.html" %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+  <div class="bg-surface border border-primary/40 rounded-xl p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined text-[20px] text-primary">contact_phone</span>
+      <h3 class="font-headline-sm text-headline-sm font-bold text-primary uppercase tracking-widest">Contact Lists</h3>
+    </div>
+    <form action="{{ url_for('filemanager.upload_file') }}" method="POST" enctype="multipart/form-data" data-upload="true" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="category" value="numbers">
+      <input type="hidden" name="subcategory" value="active">
+      <div class="upload-zone border-2 border-dashed border-primary/50 rounded-lg p-8 text-center cursor-pointer" data-input="file-upload">
+        <p class="text-primary font-label-md text-label-md uppercase tracking-wider">Drag files here or click to browse</p>
+        <p class="text-outline text-label-sm text-label-sm mt-2">Supported: TXT, CSV, Excel</p>
+        <input type="file" name="file" class="hidden" id="file-upload">
+      </div>
+      <button type="submit" class="w-full font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">Upload Contact List</button>
+    </form>
+  </div>
+
+  <div class="bg-surface border border-primary/40 rounded-xl p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined text-[20px] text-primary">graphic_eq</span>
+      <h3 class="font-headline-sm text-headline-sm font-bold text-primary uppercase tracking-widest">Audio</h3>
+    </div>
+    <p class="text-body-md text-body-md text-outline mb-4">Intro / outro recordings for voice campaigns. Auto-converted to Asterisk-ready 8 kHz mono WAV.</p>
+    <form action="{{ url_for('filemanager.upload_file') }}" method="POST" enctype="multipart/form-data" data-upload="true" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="category" value="audio">
+      <input type="hidden" name="subcategory" value="intro">
+      <div class="upload-zone border-2 border-dashed border-primary/50 rounded-lg p-6 text-center cursor-pointer" data-input="audio-upload">
+        <p class="text-primary font-label-md text-label-md uppercase tracking-wider">Drop audio here</p>
+        <p class="text-outline text-label-sm text-label-sm mt-2">WAV, MP3, GSM, OGG, FLAC, M4A — max 50 MB</p>
+        <input type="file" name="file" class="hidden" id="audio-upload">
+      </div>
+      <button type="submit" class="w-full font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">Upload Audio</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <div class="bg-surface border border-primary/40 rounded-xl p-4">
+    <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-2">Recent Uploads</h3>
+    {% if files %}
+    <div class="divide-y divide-outline-variant/30">
+      {% for f in files %}
+      <div class="flex items-center gap-3 py-2">
+        <span class="material-symbols-outlined text-[18px] text-outline shrink-0">insert_drive_file</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-body-md text-body-md text-on-surface truncate">{{ f.original_name }}</p>
+          <p class="font-mono text-label-sm text-label-sm text-outline">{{ f.category|upper }} / {{ f.subcategory|upper }} &middot; {{ f.file_size|human_size }}</p>
+        </div>
+        <span class="border border-status-green/50 text-status-green px-2 py-0.5 rounded text-[10px] uppercase">Stored</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-body-md text-body-md text-outline py-4">No uploads yet — stage a contact list above.</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-surface border border-primary/40 rounded-xl p-4">
+    <h3 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-2">Audio Assets</h3>
+    {% if assets %}
+    <div class="divide-y divide-outline-variant/30">
+      {% for a in assets %}
+      {% set name = a.name %}{% set format = a.type|upper %}{% set size = '—' %}{% set duration = '' %}
+      {% include "components/audio_row.html" %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-body-md text-body-md text-outline py-4">No audio assets yet — upload an intro or outro above.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

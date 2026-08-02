@@ -1,0 +1,10 @@
+{# status_ribbon.html — header system state. Params: state
+   (operational/degraded/down), detail (default "System: Operational"). #}
+{% set _state = state|default('operational') %}
+<span class="inline-flex items-center gap-2 font-code-sm text-code-sm uppercase tracking-wider px-2 py-1 border rounded
+             {% if _state == 'operational' %}text-status-green border-status-green/40 bg-status-green/10
+             {% elif _state == 'degraded' %}text-status-yellow border-status-yellow/40 bg-status-yellow/10
+             {% else %}text-status-red border-status-red/40 bg-status-red/10{% endif %}">
+  <span class="w-2 h-2 rounded-full pulse-dot {% if _state == 'operational' %}bg-status-green{% elif _state == 'degraded' %}bg-status-yellow{% else %}bg-status-red{% endif %}"></span>
+  {{ detail|default('System: Operational') }}
+</span>

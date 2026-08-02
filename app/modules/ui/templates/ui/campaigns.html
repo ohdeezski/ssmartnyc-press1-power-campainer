@@ -1,0 +1,52 @@
+{% extends "ui/base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="font-headline-md text-headline-md font-bold text-primary tracking-widest uppercase">Campaigns</h2>
+    <p class="text-body-md text-body-md text-outline mt-1">Everything you have launched or are preparing.</p>
+  </div>
+  <a href="{{ url_for('campaigns.campaign_new') }}" class="inline-flex items-center gap-1 font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">
+    <span class="material-symbols-outlined text-[16px]">add</span> New Campaign
+  </a>
+</div>
+
+{% if campaigns %}
+<div class="bg-surface border border-primary/40 rounded-xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-lowest border-b border-outline-variant">
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Identifier</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Type</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Status</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider">Created</th>
+          <th class="px-4 py-3 font-label-md text-label-md text-primary uppercase tracking-wider text-center">Cmd</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/30">
+        {% for c in campaigns %}
+        <tr class="hover:bg-primary/5 transition-colors">
+          <td class="px-4 py-3">
+            <a href="{{ url_for('campaigns.campaign_detail', campaign_id=c.id) }}" class="font-bold text-primary hover:text-primary-fixed-dim">{{ c.name }}</a>
+          </td>
+          <td class="px-4 py-3 text-center"><span class="border border-primary/40 text-primary px-2 py-0.5 rounded text-[10px] uppercase">{{ c.type }}</span></td>
+          <td class="px-4 py-3 text-center">
+            {% set status = c.status %}{% include "components/status_badge.html" %}
+          </td>
+          <td class="px-4 py-3 text-outline font-mono">{{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '—' }}</td>
+          <td class="px-4 py-3 text-center">
+            <a href="{{ url_for('campaigns.campaign_edit', campaign_id=c.id) }}" class="material-symbols-outlined text-sm text-outline hover:text-primary transition-colors" title="Edit">edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="bg-surface border border-primary/40 rounded-xl">
+  {% set icon = 'campaign' %}{% set title = 'No campaigns yet' %}{% set message = 'Stage a contact list in the Upload Center, then create your first campaign.' %}{% set action_url = url_for('ui.upload_center') %}{% set action_text = 'GO TO UPLOAD CENTER' %}
+  {% include "components/empty_state.html" %}
+</div>
+{% endif %}
+{% endblock %}

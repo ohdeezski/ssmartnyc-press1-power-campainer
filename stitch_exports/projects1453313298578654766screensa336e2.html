@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>57R337 $M4R7 NYC | Provider Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #050505;
+            color: #dce4e5;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.1) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.02),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.02)
+            );
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.3;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .status-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(0.92); }
+        }
+
+        .glitch-border {
+            border: 1px solid #1CEFFF;
+            box-shadow: 0 0 5px rgba(28, 239, 255, 0.2);
+        }
+
+        .mono-label {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Custom scrollbar for tactical feel */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1CEFFF;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#080f11",
+                        "surface-bright": "#333a3c",
+                        "on-primary-container": "#00626e",
+                        "surface-variant": "#2e3638",
+                        "background": "#050505",
+                        "surface": "#101418",
+                        "primary-container": "#00e5ff",
+                        "outline": "#1CEFFF",
+                        "outline-variant": "#3b494c",
+                        "on-surface": "#dce4e5",
+                        "error": "#ffb4ab",
+                        "success": "#00E676",
+                        "warning": "#FFD600"
+                    },
+                    "spacing": {
+                        "header-height": "64px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "panel-gap": "12px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-mono": ["JetBrains Mono"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background">
+<div class="scanlines"></div>
+<!-- TopNavBar Implementation -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#101418] h-[64px] border-b border-primary-container flex justify-between items-center px-container-padding">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-display-lg font-bold text-primary-container tracking-tighter">57R337 $M4R7 NYC</span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<span class="font-label-mono text-label-mono text-outline uppercase tracking-widest">Sector 09 // Connectivity</span>
+</div>
+<div class="hidden md:flex gap-8 items-center h-full">
+<nav class="flex gap-6 h-full items-center">
+<a class="text-outline font-medium hover:text-primary-container transition-colors duration-200 uppercase text-label-mono" href="#">Dashboard</a>
+<a class="text-outline font-medium hover:text-primary-container transition-colors duration-200 uppercase text-label-mono" href="#">Upload Center</a>
+<a class="text-primary-container border-b-2 border-primary-container font-bold pb-1 uppercase text-label-mono" href="#">Providers</a>
+<a class="text-outline font-medium hover:text-primary-container transition-colors duration-200 uppercase text-label-mono" href="#">Campaigns</a>
+</nav>
+<div class="flex items-center gap-4 border-l border-outline-variant pl-8">
+<span class="font-label-mono text-label-mono text-primary-container">OPERATOR_01</span>
+<button class="px-4 py-1 border border-primary-container text-primary-container font-label-mono text-label-mono uppercase hover:bg-primary-container hover:text-background transition-all active:opacity-80">Log Out</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar Implementation -->
+<aside class="fixed left-0 top-[64px] h-[calc(100vh-64px)] w-64 bg-surface-container-lowest border-r border-outline-variant hidden md:flex flex-col py-gutter px-unit gap-panel-gap">
+<div class="px-4 py-2 mb-4">
+<p class="font-label-mono text-[10px] tracking-widest text-outline uppercase">Tactical Dashboard</p>
+<p class="font-display-lg text-lg font-bold text-primary-container">PROV_CNTRL</p>
+</div>
+<nav class="flex flex-col gap-2">
+<div class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-surface-bright transition-all duration-150 cursor-pointer group">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="font-label-mono text-label-mono tracking-widest uppercase">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-surface-bright transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-xl">cloud_upload</span>
+<span class="font-label-mono text-label-mono tracking-widest uppercase">Upload Center</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-primary-container bg-surface-variant font-bold border-r-2 border-primary-container scale-95 active:scale-90 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-xl">hub</span>
+<span class="font-label-mono text-label-mono tracking-widest uppercase">Providers</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-surface-bright transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-xl">campaign</span>
+<span class="font-label-mono text-label-mono tracking-widest uppercase">Campaigns</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-outline hover:bg-surface-bright transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="font-label-mono text-label-mono tracking-widest uppercase">Notifications</span>
+</div>
+<div class="mt-auto flex items-center gap-3 px-4 py-3 text-outline hover:bg-surface-bright transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="font-label-mono text-label-mono tracking-widest uppercase">Settings</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content -->
+<main class="md:ml-64 pt-[64px] p-container-padding min-h-screen">
+<div class="max-w-[1280px] mx-auto space-y-8">
+<!-- Failover Protocol Chain -->
+<section class="space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">security</span>
+<h2 class="font-headline-md text-headline-md uppercase tracking-widest text-primary-container">Failover Protocol Chain</h2>
+</div>
+<div class="bg-[#101418] border border-primary-container p-6 rounded-lg flex flex-wrap items-center justify-center gap-4 md:gap-8 relative overflow-hidden">
+<!-- Background aesthetic pattern -->
+<div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(#1CEFFF 1px, transparent 1px); background-size: 20px 20px;"></div>
+<!-- Provider Chip 1 -->
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="px-6 py-3 border border-primary-container bg-background/80 backdrop-blur-sm flex items-center gap-3 min-w-[160px]">
+<div class="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#00E676]"></div>
+<span class="font-label-mono text-sm font-bold tracking-tighter">ASTERISK</span>
+<span class="font-label-mono text-[10px] text-outline ml-auto">PRIORITY 01</span>
+</div>
+</div>
+<!-- Arrow 1 -->
+<div class="hidden md:flex items-center">
+<span class="material-symbols-outlined text-primary-container animate-pulse">arrow_forward</span>
+</div>
+<!-- Provider Chip 2 -->
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="px-6 py-3 border border-primary-container bg-background/80 backdrop-blur-sm flex items-center gap-3 min-w-[160px]">
+<div class="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_#00E676]"></div>
+<span class="font-label-mono text-sm font-bold tracking-tighter">TWILIO</span>
+<span class="font-label-mono text-[10px] text-outline ml-auto">PRIORITY 02</span>
+</div>
+</div>
+<!-- Arrow 2 -->
+<div class="hidden md:flex items-center">
+<span class="material-symbols-outlined text-primary-container animate-pulse">arrow_forward</span>
+</div>
+<!-- Provider Chip 3 -->
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="px-6 py-3 border border-warning/50 bg-background/80 backdrop-blur-sm flex items-center gap-3 min-w-[160px]">
+<div class="w-2 h-2 rounded-full bg-warning shadow-[0_0_8px_#FFD600]"></div>
+<span class="font-label-mono text-sm font-bold tracking-tighter">TELNYX</span>
+<span class="font-label-mono text-[10px] text-outline ml-auto">PRIORITY 03</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Provider Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-panel-gap">
+<!-- Provider Card Template Loop -->
+<!-- Asterisk SIP -->
+<div class="bg-[#101418] border border-primary-container/30 hover:border-primary-container transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success status-pulse shadow-[0_0_8px_#00E676]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">Asterisk SIP</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-success/30 text-success uppercase">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-primary-container">24ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">14.2k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<!-- Simple CSS Sparkline Simulated -->
+<div class="bg-primary-container/40 flex-1" style="height: 40%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 60%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 35%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 80%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 55%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 70%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 90%"></div>
+<div class="bg-primary-container flex-1" style="height: 45%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- Twilio -->
+<div class="bg-[#101418] border border-primary-container/30 hover:border-primary-container transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success status-pulse shadow-[0_0_8px_#00E676]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">Twilio</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-success/30 text-success uppercase">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-primary-container">48ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">32.8k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-primary-container/40 flex-1" style="height: 60%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 40%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 85%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 20%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 65%"></div>
+<div class="bg-primary-container flex-1" style="height: 70%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- Telnyx -->
+<div class="bg-[#101418] border border-warning/50 hover:border-warning transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-warning status-pulse shadow-[0_0_8px_#FFD600]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">Telnyx</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-warning/30 text-warning uppercase">Degraded</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-warning">312ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">5.2k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-warning/40 flex-1" style="height: 90%"></div>
+<div class="bg-warning/40 flex-1" style="height: 85%"></div>
+<div class="bg-warning/40 flex-1" style="height: 95%"></div>
+<div class="bg-warning/40 flex-1" style="height: 100%"></div>
+<div class="bg-warning/40 flex-1" style="height: 80%"></div>
+<div class="bg-warning flex-1" style="height: 90%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- SMTP -->
+<div class="bg-[#101418] border border-primary-container/30 hover:border-primary-container transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success status-pulse shadow-[0_0_8px_#00E676]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">SMTP Relay</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-success/30 text-success uppercase">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-primary-container">12ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">114k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-primary-container/40 flex-1" style="height: 30%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 35%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 30%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 40%"></div>
+<div class="bg-primary-container flex-1" style="height: 32%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- Telegram -->
+<div class="bg-[#101418] border border-primary-container/30 hover:border-primary-container transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success status-pulse shadow-[0_0_8px_#00E676]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">Telegram</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-success/30 text-success uppercase">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-primary-container">18ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">2.1k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-primary-container/40 flex-1" style="height: 20%"></div>
+<div class="bg-primary-container/40 flex-1" style="height: 50%"></div>
+<div class="bg-primary-container flex-1" style="height: 30%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- WhatsApp -->
+<div class="bg-[#101418] border border-error/50 hover:border-error transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error status-pulse shadow-[0_0_8px_#ffb4ab]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">WhatsApp</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-error/30 text-error uppercase">Down</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-error">N/A</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">0.0k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-error/20 flex-1" style="height: 5%"></div>
+<div class="bg-error/20 flex-1" style="height: 5%"></div>
+<div class="bg-error/20 flex-1" style="height: 5%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- Messenger -->
+<div class="bg-[#101418] border border-primary-container/30 hover:border-primary-container transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success status-pulse shadow-[0_0_8px_#00E676]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">Messenger</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-success/30 text-success uppercase">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-primary-container">65ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">8.4k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-primary-container/40 flex-1" style="height: 50%"></div>
+<div class="bg-primary-container flex-1" style="height: 45%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+<!-- Instagram -->
+<div class="bg-[#101418] border border-primary-container/30 hover:border-primary-container transition-all group p-4 space-y-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success status-pulse shadow-[0_0_8px_#00E676]"></div>
+<h3 class="font-headline-sm uppercase tracking-widest text-on-surface">Instagram</h3>
+</div>
+<span class="font-label-mono text-[10px] px-2 py-0.5 border border-success/30 text-success uppercase">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Latency</p>
+<p class="font-headline-md text-primary-container">71ms</p>
+</div>
+<div class="space-y-1 text-right">
+<p class="font-label-mono text-[10px] text-outline uppercase tracking-widest">Daily Flux</p>
+<p class="font-headline-md text-on-surface">6.1k</p>
+</div>
+</div>
+<div class="h-12 w-full flex items-end gap-[2px]">
+<div class="bg-primary-container/40 flex-1" style="height: 40%"></div>
+<div class="bg-primary-container flex-1" style="height: 55%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant">
+<button class="py-2 border border-primary-container text-primary-container font-label-mono text-[10px] uppercase hover:bg-primary-container/10 transition-all">Configure</button>
+<button class="py-2 bg-primary-container text-background font-label-mono text-[10px] uppercase font-bold hover:brightness-110 active:scale-95 transition-all">Test Conn</button>
+</div>
+</div>
+</section>
+<!-- Bottom Data Stats -->
+<section class="mt-8 border border-outline-variant bg-[#080f11] p-6 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase">Aggregate Node Health</p>
+<p class="font-display-lg text-2xl text-primary-container">87.4%</p>
+</div>
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase">Total Tx Today</p>
+<p class="font-display-lg text-2xl text-on-surface">184.7K</p>
+</div>
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase">Active Routing Ops</p>
+<p class="font-display-lg text-2xl text-on-surface">12 active</p>
+</div>
+<div class="space-y-1">
+<p class="font-label-mono text-[10px] text-outline uppercase">Failover Capacity</p>
+<p class="font-display-lg text-2xl text-success">Optimized</p>
+</div>
+</section>
+</div>
+</main>
+<script>
+        // Micro-interactions for tactical feel
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                // Sound effect logic could go here
+            });
+            
+            button.addEventListener('click', function(e) {
+                let ripple = document.createElement('div');
+                ripple.classList.add('ripple');
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // Simple mock data update simulation
+        setInterval(() => {
+            document.querySelectorAll('.font-headline-md.text-primary-container').forEach(latency => {
+                const val = parseInt(latency.innerText);
+                if (!isNaN(val)) {
+                    const jitter = Math.floor(Math.random() * 5) - 2;
+                    latency.innerText = (val + jitter) + 'ms';
+                }
+            });
+        }, 3000);
+    </script>
+</body></html>
