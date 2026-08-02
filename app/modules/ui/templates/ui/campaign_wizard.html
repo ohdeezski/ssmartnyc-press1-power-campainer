@@ -64,12 +64,12 @@
     </div>
     <div>
       <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Concurrent Calls</label>
-      <input type="number" name="concurrent_calls" value="{{ campaign.settings.concurrent_calls if campaign and campaign.settings else 5 }}"
+      <input type="number" name="concurrent_calls" value="{{ (campaign.settings or {}).get('concurrent_calls', 5) }}"
              class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md" min="1" max="100">
     </div>
     <div>
       <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Retry Attempts</label>
-      <input type="number" name="retry_attempts" value="{{ campaign.settings.retry_attempts if campaign and campaign.settings else 2 }}"
+      <input type="number" name="retry_attempts" value="{{ (campaign.settings or {}).get('retry_attempts', 2) }}"
              class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md" min="0" max="10">
     </div>
   </div>

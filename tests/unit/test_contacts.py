@@ -1,6 +1,7 @@
 """Tests for the contacts module."""
 
 import pytest
+
 from app import create_app, db
 from app.modules.contacts.models import Contact, ContactList
 from app.modules.contacts.services import ContactImportService, normalize_phone

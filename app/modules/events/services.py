@@ -1,8 +1,16 @@
 from app.extensions import db, socketio
-from app.modules.events.models import Event, AuditLog
+from app.modules.events.models import AuditLog, Event
 
 
-def publish_event(entity_type, entity_id, action, message_human=None, level="info", payload=None, user_id=None):
+def publish_event(
+    entity_type,
+    entity_id,
+    action,
+    message_human=None,
+    level="info",
+    payload=None,
+    user_id=None,
+):
     """Publish an event: write to DB and emit via SocketIO."""
     event = Event(
         entity_type=entity_type,
@@ -32,7 +40,9 @@ def publish_event(entity_type, entity_id, action, message_human=None, level="inf
     return event
 
 
-def log_audit(user_id, action, entity_type=None, entity_id=None, details=None, ip_address=None):
+def log_audit(
+    user_id, action, entity_type=None, entity_id=None, details=None, ip_address=None
+):
     """Write an audit log entry."""
     entry = AuditLog(
         user_id=user_id,

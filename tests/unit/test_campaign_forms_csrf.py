@@ -7,6 +7,7 @@ These tests prove the forms carry a token and reject requests without one.
 
 import re
 
+from app.extensions import db
 from app.modules.campaigns.models import Campaign
 
 
@@ -62,6 +63,11 @@ def test_campaign_launch_pause_stop_with_csrf(app, client):
     assert resp.status_code == 302
     with client.application.app_context():
         campaign_id = Campaign.query.filter_by(name="Lifecycle").first().id
+
+    with client.application.app_context():
+        campaign = Campaign.query.get(campaign_id)
+        campaign.verified_at = db.func.now()
+        db.session.commit()
 
     token = _extract_csrf(client.get(f"/campaigns/{campaign_id}"))
     resp = client.post(f"/campaigns/{campaign_id}/launch", data={"csrf_token": token})

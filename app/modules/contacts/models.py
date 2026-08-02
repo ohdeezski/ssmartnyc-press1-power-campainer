@@ -6,7 +6,9 @@ class ContactList(db.Model):  # type: ignore[name-defined]
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
-    source_file_id = db.Column(db.Integer, db.ForeignKey("stored_files.id"), nullable=True)
+    source_file_id = db.Column(
+        db.Integer, db.ForeignKey("stored_files.id"), nullable=True
+    )
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="uploaded")
     counts = db.Column(db.JSON, nullable=True)
@@ -15,7 +17,22 @@ class ContactList(db.Model):  # type: ignore[name-defined]
 
     source_file = db.relationship("StoredFile", backref="contact_lists", lazy=True)
     creator = db.relationship("User", backref="contact_lists", lazy=True)
-    contacts = db.relationship("Contact", backref="contact_list", lazy="dynamic", cascade="all, delete-orphan")
+    contacts = db.relationship(
+        "Contact", backref="contact_list", lazy="dynamic", cascade="all, delete-orphan"
+    )
+
+    def count_contacts(self):
+        return self.contacts.count()
+
+    @property
+    def contact_count(self):
+        """Quick contact count for templates, preferring the cached counts
+        dict set by ContactImportService, falling back to a COUNT query."""
+        if self.counts and self.counts.get("loaded", 0) > 0:
+            return self.counts["loaded"]
+        if self.counts and self.counts.get("remaining", 0) > 0:
+            return self.counts["remaining"]
+        return self.contacts.count()
 
     def to_dict(self):
         return {
@@ -25,8 +42,11 @@ class ContactList(db.Model):  # type: ignore[name-defined]
             "created_by": self.created_by,
             "status": self.status,
             "counts": self.counts or {},
+            "contact_count": self.contact_count,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "committed_at": self.committed_at.isoformat() if self.committed_at else None,
+            "committed_at": (
+                self.committed_at.isoformat() if self.committed_at else None
+            ),
         }
 
 
@@ -34,7 +54,9 @@ class Contact(db.Model):  # type: ignore[name-defined]
     __tablename__ = "contacts"
 
     id = db.Column(db.Integer, primary_key=True)
-    contact_list_id = db.Column(db.Integer, db.ForeignKey("contact_lists.id"), nullable=False)
+    contact_list_id = db.Column(
+        db.Integer, db.ForeignKey("contact_lists.id"), nullable=False
+    )
     phone = db.Column(db.String(20), nullable=False, index=True)
     name = db.Column(db.String(255), nullable=True)
     email = db.Column(db.String(255), nullable=True)

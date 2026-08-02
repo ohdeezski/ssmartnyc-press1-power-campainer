@@ -9,7 +9,9 @@ class Event(db.Model):  # type: ignore[name-defined]
     entity_id = db.Column(db.Integer, nullable=True)
     action = db.Column(db.String(100), nullable=False)
     message_human = db.Column(db.String(500), nullable=True)
-    level = db.Column(db.String(20), nullable=False, default="info")  # info|success|warning|error
+    level = db.Column(
+        db.String(20), nullable=False, default="info"
+    )  # info|success|warning|error
     payload = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 

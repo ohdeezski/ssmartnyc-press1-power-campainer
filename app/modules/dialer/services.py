@@ -29,12 +29,16 @@ class DialerService:
 
         # Launch
         self.backend.launch(campaign_run, contacts)
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run_id,
-            "action": "launched",
-            "message": "Campaign simulation launched",
-            "level": "info",
-        }, room=f"campaign:{campaign_run_id}")
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run_id,
+                "action": "launched",
+                "message": "Campaign simulation launched",
+                "level": "info",
+            },
+            room=f"campaign:{campaign_run_id}",
+        )
 
         # Tick until all calls are complete
         max_ticks = 200
@@ -46,14 +50,18 @@ class DialerService:
             # Emit progress every 10 ticks
             if tick_num % 10 == 0:
                 status = self.backend.status(campaign_run)
-                socketio.emit("campaign_event", {
-                    "run_id": campaign_run_id,
-                    "action": "tick",
-                    "tick": tick_num,
-                    "status_counts": status["status_counts"],
-                    "total_calls": status["total_calls"],
-                    "level": "info",
-                }, room=f"campaign:{campaign_run_id}")
+                socketio.emit(
+                    "campaign_event",
+                    {
+                        "run_id": campaign_run_id,
+                        "action": "tick",
+                        "tick": tick_num,
+                        "status_counts": status["status_counts"],
+                        "total_calls": status["total_calls"],
+                        "level": "info",
+                    },
+                    room=f"campaign:{campaign_run_id}",
+                )
 
         # Finalize
         self._finalize(campaign_run)
@@ -61,6 +69,7 @@ class DialerService:
 
     def _get_contacts(self, campaign_run):
         """Get contacts for the campaign run (simplified)."""
+
         # In a real implementation, this would pull from ContactList
         # For simulation, generate synthetic contacts
         class FakeContact:
@@ -74,8 +83,6 @@ class DialerService:
 
     def _finalize(self, campaign_run):
         """Mark campaign run as finished and update counters."""
-        from app.modules.campaigns.models import CampaignRun
-
         calls = Call.query.filter_by(campaign_run_id=campaign_run.id).all()
         total = len(calls)
         answered = sum(1 for c in calls if c.outcome == "answered")
@@ -92,21 +99,26 @@ class DialerService:
         campaign_run.duration = 0
         db.session.commit()
 
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run.id,
-            "action": "finished",
-            "counters": {
-                "total": total,
-                "answered": answered,
-                "press1": press1,
-                "voicemail": voicemail,
-                "failed": failed,
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run.id,
+                "action": "finished",
+                "counters": {
+                    "total": total,
+                    "answered": answered,
+                    "press1": press1,
+                    "voicemail": voicemail,
+                    "failed": failed,
+                },
+                "level": "success",
             },
-            "level": "success",
-        }, room=f"campaign:{campaign_run.id}")
+            room=f"campaign:{campaign_run.id}",
+        )
 
     def pause(self, campaign_run_id):
         from app.modules.campaigns.models import CampaignRun
+
         campaign_run = CampaignRun.query.get(campaign_run_id)
         self.backend.pause(campaign_run)
         socketio.emit(
@@ -121,6 +133,7 @@ class DialerService:
 
     def stop(self, campaign_run_id):
         from app.modules.campaigns.models import CampaignRun
+
         campaign_run = CampaignRun.query.get(campaign_run_id)
         self.backend.stop(campaign_run)
         socketio.emit(

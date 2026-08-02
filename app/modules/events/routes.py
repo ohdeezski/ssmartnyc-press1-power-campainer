@@ -2,7 +2,7 @@ from flask import jsonify, request
 from flask_login import current_user, login_required
 
 from app.modules.events import events_bp
-from app.modules.events.models import Event, AuditLog
+from app.modules.events.models import AuditLog, Event
 from app.modules.events.services import publish_event
 
 

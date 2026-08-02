@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.modules.dialer import dialer_bp
-from app.modules.dialer.models import Provider, CallerProfile, Call
+from app.modules.dialer.models import Call, CallerProfile, Provider
 from app.modules.dialer.services import DialerService
 
 
@@ -104,13 +104,16 @@ def launch_campaign(campaign_id):
         run_number=1,
         status="running",
         started_at=db.func.now(),
-        total_contacts=campaign.settings.get("total_contacts", 100) if campaign.settings else 100,
+        total_contacts=(
+            campaign.settings.get("total_contacts", 100) if campaign.settings else 100
+        ),
     )
     db.session.add(run)
     db.session.commit()
 
     # Start simulation in background (eager mode in dev)
     from app.modules.dialer.tasks import run_campaign
+
     run_campaign(run.id)
 
     return jsonify({"run_id": run.id, "status": "running"})
@@ -122,6 +125,7 @@ def pause_campaign(campaign_id):
     service = DialerService()
     # Find the active run
     from app.modules.campaigns.models import CampaignRun
+
     run = CampaignRun.query.filter_by(campaign_id=campaign_id, status="running").first()
     if not run:
         return jsonify({"error": "No active run found"}), 404
@@ -134,6 +138,7 @@ def pause_campaign(campaign_id):
 def stop_campaign(campaign_id):
     service = DialerService()
     from app.modules.campaigns.models import CampaignRun
+
     run = CampaignRun.query.filter_by(campaign_id=campaign_id, status="running").first()
     if not run:
         return jsonify({"error": "No active run found"}), 404

@@ -1,6 +1,6 @@
 import json
 
-from flask import flash, redirect, render_template, request, url_for, jsonify
+from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -62,10 +62,34 @@ def campaign_edit(campaign_id):
 @campaigns_bp.route("/<int:campaign_id>/launch", methods=["POST"])
 @login_required
 def campaign_launch(campaign_id):
+    """Launch a campaign — checks verified_at via CampaignService, creates a
+    CampaignRun, and kicks off the dialer.  Serves both the HTML form
+    (mission_control / wizard) and the JSON API."""
+    from app.modules.campaigns.services import CampaignService
+
     campaign = Campaign.query.get_or_404(campaign_id)
-    campaign.status = "running"
-    campaign.started_at = db.func.now()
-    db.session.commit()
+    if campaign.created_by != current_user.id:
+        if request.path.startswith("/api"):
+            return jsonify({"error": "Unauthorized"}), 403
+        return redirect(url_for("campaigns.campaign_detail", campaign_id=campaign_id))
+
+    # Delegate to CampaignService which gates on verified_at
+    result = CampaignService.launch_campaign(campaign_id)
+    if result is None:
+        if request.path.startswith("/api"):
+            return jsonify({"error": "Campaign not found"}), 404
+        flash("Campaign not found", "danger")
+        return redirect(url_for("campaigns.campaign_detail", campaign_id=campaign_id))
+    if isinstance(result, dict) and "error" in result:
+        # JSON API → JSON error
+        return jsonify(result), 400
+
+    campaign = result
+    started = campaign.started_at.isoformat() if campaign.started_at else None
+
+    # Content-negotiate: JSON client gets JSON, HTML form gets redirect
+    if request.accept_mimetypes.best == "application/json":
+        return jsonify({"status": campaign.status, "started_at": started})
     flash("Campaign launched", "success")
     return redirect(url_for("campaigns.campaign_detail", campaign_id=campaign.id))
 
@@ -155,25 +179,12 @@ def campaign_prepare(campaign_id):
     return jsonify({"status": campaign.status, "readiness": campaign.readiness})
 
 
-@campaigns_bp.route("/<int:campaign_id>/launch", methods=["POST"])
-@login_required
-def campaign_launch_json(campaign_id):
-    result = CampaignService.launch_campaign(campaign_id)
-    if result is None:
-        return jsonify({"error": "Campaign not found"}), 404
-    if isinstance(result, dict) and "error" in result:
-        return jsonify(result), 400
-    campaign = result
-    started = (
-        campaign.started_at.isoformat()
-        if campaign.started_at
-        else None
-    )
-    return jsonify({"status": campaign.status, "started_at": started})
-
-
 @campaigns_bp.route("/<int:campaign_id>/runs", methods=["GET"])
 @login_required
 def campaign_runs(campaign_id):
-    runs = CampaignRun.query.filter_by(campaign_id=campaign_id).order_by(CampaignRun.run_number.desc()).all()
+    runs = (
+        CampaignRun.query.filter_by(campaign_id=campaign_id)
+        .order_by(CampaignRun.run_number.desc())
+        .all()
+    )
     return jsonify([r.to_dict() for r in runs])

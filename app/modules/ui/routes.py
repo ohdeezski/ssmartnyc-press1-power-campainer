@@ -130,10 +130,19 @@ def mission_control(campaign_id):
     from app.modules.dialer.models import Call
 
     campaign = Campaign.query.get_or_404(campaign_id)
-    run = CampaignRun.query.filter_by(campaign_id=campaign_id).order_by(CampaignRun.run_number.desc()).first()
+    run = (
+        CampaignRun.query.filter_by(campaign_id=campaign_id)
+        .order_by(CampaignRun.run_number.desc())
+        .first()
+    )
     calls = None
     if run:
-        calls = Call.query.filter_by(campaign_run_id=run.id).order_by(Call.created_at.desc()).limit(50).all()
+        calls = (
+            Call.query.filter_by(campaign_run_id=run.id)
+            .order_by(Call.created_at.desc())
+            .limit(50)
+            .all()
+        )
     return render_template(
         "ui/mission_control.html",
         campaign=campaign,
@@ -152,11 +161,13 @@ def campaign_wizard(campaign_id):
     campaign = Campaign.query.get_or_404(campaign_id)
     contact_lists = ContactList.query.order_by(ContactList.created_at.desc()).all()
     step = request.args.get("step", 1, type=int)
+    readiness = campaign.readiness or {}
     return render_template(
         "ui/campaign_wizard.html",
         campaign=campaign,
         contact_lists=contact_lists,
         step=step,
+        readiness=readiness if step > 1 else None,
         user=current_user,
     )
 

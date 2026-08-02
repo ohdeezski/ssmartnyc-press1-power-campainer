@@ -1,9 +1,10 @@
 """Tests for the events module."""
 
 import pytest
+
 from app import create_app, db
-from app.modules.events.models import Event, AuditLog
-from app.modules.events.services import publish_event, log_audit
+from app.modules.events.models import AuditLog, Event
+from app.modules.events.services import log_audit, publish_event
 
 
 @pytest.fixture

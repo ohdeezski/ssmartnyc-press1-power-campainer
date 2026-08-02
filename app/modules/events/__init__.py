@@ -3,4 +3,4 @@ from flask import Blueprint
 
 events_bp = Blueprint("events", __name__, url_prefix="/api/events")
 
-from app.modules.events import models, services, routes
+from app.modules.events import models, routes, services

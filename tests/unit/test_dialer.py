@@ -1,9 +1,10 @@
 """Tests for the dialer module."""
 
 import pytest
+
 from app import create_app, db
-from app.modules.dialer.models import Provider, CallerProfile, NumberPool, Call
 from app.modules.dialer.backends.simulation import SimulationBackend
+from app.modules.dialer.models import Call, CallerProfile, Provider
 from app.modules.dialer.services import DialerService
 
 

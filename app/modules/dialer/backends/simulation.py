@@ -35,7 +35,9 @@ class SimulationBackend(DialerBackend):
         for contact in contacts:
             call = Call(
                 campaign_run_id=campaign_run.id,
-                contact_phone=contact.phone if hasattr(contact, "phone") else str(contact),
+                contact_phone=(
+                    contact.phone if hasattr(contact, "phone") else str(contact)
+                ),
                 status="preparing",
                 status_history=[{"stage": "preparing", "timestamp": now_iso}],
             )
@@ -69,7 +71,9 @@ class SimulationBackend(DialerBackend):
             "transfer",
             "complete",
         ]
-        current_idx = stage_order.index(call.status) if call.status in stage_order else 0
+        current_idx = (
+            stage_order.index(call.status) if call.status in stage_order else 0
+        )
         next_idx = min(current_idx + 1, len(stage_order) - 1)
         next_stage = stage_order[next_idx]
 
@@ -82,15 +86,20 @@ class SimulationBackend(DialerBackend):
 
         # Emit SocketIO event for the stage transition
         campaign_run_id = call.campaign_run_id
-        socketio.emit("campaign_event", {
-            "run_id": campaign_run_id,
-            "action": "call_stage",
-            "call_id": call.id,
-            "contact_phone": call.contact_phone,
-            "stage": next_stage,
-            "outcome": call.outcome if next_stage == "complete" else None,
-            "level": "info",
-        }, room=f"campaign:{campaign_run_id}", namespace="/")
+        socketio.emit(
+            "campaign_event",
+            {
+                "run_id": campaign_run_id,
+                "action": "call_stage",
+                "call_id": call.id,
+                "contact_phone": call.contact_phone,
+                "stage": next_stage,
+                "outcome": call.outcome if next_stage == "complete" else None,
+                "level": "info",
+            },
+            room=f"campaign:{campaign_run_id}",
+            namespace="/",
+        )
 
         # Determine final outcome at the 'complete' stage
         if next_stage == "complete":
@@ -102,7 +111,13 @@ class SimulationBackend(DialerBackend):
                 call.press1_detected = True
             elif roll < self.ANSWER_RATE + self.PRESS1_RATE + self.VOICEMAIL_RATE:
                 call.outcome = "voicemail"
-            elif roll < self.ANSWER_RATE + self.PRESS1_RATE + self.VOICEMAIL_RATE + self.NO_ANSWER_RATE:
+            elif (
+                roll
+                < self.ANSWER_RATE
+                + self.PRESS1_RATE
+                + self.VOICEMAIL_RATE
+                + self.NO_ANSWER_RATE
+            ):
                 call.outcome = "no_answer"
             else:
                 call.outcome = "failed"
@@ -110,17 +125,21 @@ class SimulationBackend(DialerBackend):
 
     def pause(self, campaign_run):
         # Simulation: just mark calls as paused
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.notin_(["complete", "failed", "blocked"])
-        ).all()
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.notin_(["complete", "failed", "blocked"]))
+            .all()
+        )
         for call in calls:
             call.status = "paused"
         db.session.commit()
 
     def stop(self, campaign_run):
-        calls = Call.query.filter_by(campaign_run_id=campaign_run.id).filter(
-            Call.status.notin_(["complete", "failed", "blocked"])
-        ).all()
+        calls = (
+            Call.query.filter_by(campaign_run_id=campaign_run.id)
+            .filter(Call.status.notin_(["complete", "failed", "blocked"]))
+            .all()
+        )
         for call in calls:
             call.status = "failed"
             call.finished_at = db.func.now()

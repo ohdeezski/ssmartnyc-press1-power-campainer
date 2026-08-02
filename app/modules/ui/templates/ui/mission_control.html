@@ -47,7 +47,7 @@
   {% include "components/stat_card.html" %}
   {% set label = 'Press 1' %}{% set value = run.conversion_count if run else 0 %}{% set icon = 'touch_app' %}{% set tone = 'purple' %}
   {% include "components/stat_card.html" %}
-  {% set label = 'Voicemail' %}{% set value = (run.counters.voicemail if run and run.counters else 0) %}{% set icon = 'voicemail' %}{% set tone = 'yellow' %}
+  {% set label = 'Voicemail' %}{% set value = run.voicemail_count if run else 0 %}{% set icon = 'voicemail' %}{% set tone = 'yellow' %}
   {% include "components/stat_card.html" %}
   {% set label = 'Failed' %}{% set value = run.failed_count if run else 0 %}{% set icon = 'error' %}{% set tone = 'red' %}
   {% include "components/stat_card.html" %}

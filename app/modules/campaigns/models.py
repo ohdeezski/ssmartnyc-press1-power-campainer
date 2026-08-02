@@ -23,8 +23,12 @@ class Campaign(db.Model):  # type: ignore[name-defined]
         nullable=True,
     )
     workflow_id = db.Column(db.Integer, db.ForeignKey("workflows.id"), nullable=True)
-    contact_list_id = db.Column(db.Integer, db.ForeignKey("contact_lists.id"), nullable=True)
-    caller_profile_id = db.Column(db.Integer, db.ForeignKey("caller_profiles.id"), nullable=True)
+    contact_list_id = db.Column(
+        db.Integer, db.ForeignKey("contact_lists.id"), nullable=True
+    )
+    caller_profile_id = db.Column(
+        db.Integer, db.ForeignKey("caller_profiles.id"), nullable=True
+    )
     provider_ids = db.Column(db.JSON, default=[])
     concurrent_calls = db.Column(db.Integer, nullable=True)
     retry_attempts = db.Column(db.Integer, nullable=True)

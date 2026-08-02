@@ -1,23 +1,27 @@
-"""Create initial schema
+"""${message}
 
-Revision ID: <revision-id>
-Revises: None
-Create Date: 2026-08-02 00:00:00.000000
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
 """
-
 from alembic import op
 import sqlalchemy as sa
+${imports if imports else ""}
 
 # revision identifiers, used by Alembic.
-revision = "<revision-id>"
-down_revision = None
-branch_labels = None
-depends_on = None
+revision = "${up_revision}"
+down_revision = "${down_revision}"
+branch_labels = "${branch_labels}"
+depends_on = "${depends_on}"
 
 
 def upgrade():
+    ${upgrades if upgrades else "pass"}
     pass
 
 
 def downgrade():
+    ${downgrades if downgrades else "pass"}
     pass
+

@@ -1,11 +1,11 @@
 """Tests for Phase 3 flight deck routes and functionality."""
 
 import pytest
+
 from app import create_app, db
-from app.modules.campaigns.models import Campaign, CampaignRun
-from app.modules.contacts.models import ContactList
-from app.modules.dialer.models import Call
 from app.modules.auth.models import User
+from app.modules.campaigns.models import Campaign, CampaignRun
+from app.modules.dialer.models import Call
 
 
 @pytest.fixture
@@ -34,10 +34,14 @@ def auth_client(client):
         db.session.commit()
 
     # Log in via the login endpoint
-    client.post("/auth/login", data={
-        "email": "admin@streetsmart.com",
-        "password": "admin123",
-    }, follow_redirects=False)
+    client.post(
+        "/auth/login",
+        data={
+            "email": "admin@streetsmart.com",
+            "password": "admin123",
+        },
+        follow_redirects=False,
+    )
 
     return client
 
@@ -142,6 +146,7 @@ class TestSimulationBackendSocketIO:
     def test_backend_has_socketio_import(self):
         """SimulationBackend imports socketio for event emission."""
         from app.modules.dialer.backends.simulation import SimulationBackend
+
         backend = SimulationBackend(seed=42)
         assert hasattr(backend, "_advance_call")
 

@@ -3,12 +3,11 @@ import os
 import re
 
 import phonenumbers
-from openpyxl import load_workbook
 from flask import current_app
+from openpyxl import load_workbook
 
 from app.extensions import db
 from app.modules.contacts.models import Contact, ContactList
-
 
 E164_RE = re.compile(r"^\+[1-9]\d{1,14}$")
 
@@ -17,11 +16,19 @@ def normalize_phone(phone_str):
     """Parse and return E.164 format, or None if unparseable."""
     if not phone_str or not phone_str.strip():
         return None
-    cleaned = phone_str.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    cleaned = (
+        phone_str.strip()
+        .replace(" ", "")
+        .replace("-", "")
+        .replace("(", "")
+        .replace(")", "")
+    )
     for region in (None, "US"):
         try:
             parsed = phonenumbers.parse(cleaned, region)
-            return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            return phonenumbers.format_number(
+                parsed, phonenumbers.PhoneNumberFormat.E164
+            )
         except phonenumbers.NumberParseException:
             continue
     return None
@@ -54,7 +61,12 @@ class ContactImportService:
             with open(file_path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    phone = row.get("phone") or row.get("number") or row.get("mobile") or row.get("tel")
+                    phone = (
+                        row.get("phone")
+                        or row.get("number")
+                        or row.get("mobile")
+                        or row.get("tel")
+                    )
                     if phone:
                         raw_numbers.append(phone.strip())
 
@@ -83,7 +95,13 @@ class ContactImportService:
 
         Returns a dict with counts and lists of valid/invalid/duplicate/blocked contacts.
         """
-        stats = {"loaded": 0, "duplicates": 0, "invalid": 0, "blocked": 0, "remaining": 0}
+        stats = {
+            "loaded": 0,
+            "duplicates": 0,
+            "invalid": 0,
+            "blocked": 0,
+            "remaining": 0,
+        }
         valid_contacts = []
         seen = set()
 
@@ -136,7 +154,9 @@ class ContactImportService:
     @staticmethod
     def create_list(name, source_file_id, created_by):
         """Create a new ContactList record."""
-        cl = ContactList(name=name, source_file_id=source_file_id, created_by=created_by)
+        cl = ContactList(
+            name=name, source_file_id=source_file_id, created_by=created_by
+        )
         db.session.add(cl)
         db.session.commit()
         return cl

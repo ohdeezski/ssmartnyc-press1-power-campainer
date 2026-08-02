@@ -20,7 +20,9 @@ def create_contact_list():
     data = request.get_json()
     if not data or not data.get("name"):
         return jsonify({"error": "name is required"}), 400
-    cl = ContactImportService.create_list(data["name"], data.get("source_file_id"), current_user.id)
+    cl = ContactImportService.create_list(
+        data["name"], data.get("source_file_id"), current_user.id
+    )
     return jsonify(cl.to_dict()), 201
 
 
@@ -34,7 +36,7 @@ def get_contact_list(list_id):
 @contacts_bp.route("/lists/<int:list_id>/contacts", methods=["GET"])
 @login_required
 def list_contacts(list_id):
-    cl = ContactList.query.get_or_404(list_id)
+    ContactList.query.get_or_404(list_id)
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 50, type=int)
     contacts = Contact.query.filter_by(contact_list_id=list_id).paginate(
@@ -75,8 +77,12 @@ def import_contacts():
         contact_list_id = cl.id
 
     # Parse and process
-    raw_numbers = ContactImportService.parse_file(stored.file_path, stored.file_extension)
-    stats, valid_contacts = ContactImportService.process(raw_numbers, contact_list_id, current_user.id)
+    raw_numbers = ContactImportService.parse_file(
+        stored.file_path, stored.file_extension
+    )
+    stats, valid_contacts = ContactImportService.process(
+        raw_numbers, contact_list_id, current_user.id
+    )
 
     # Update list status
     contact_list = ContactList.query.get(contact_list_id)
