@@ -1,67 +1,119 @@
 from app.extensions import db, socketio
 from app.modules.dialer.backends.simulation import SimulationBackend
-from app.modules.dialer.models import Call
+from app.modules.dialer.backends.asterisk import AsteriskBackend
+from app.modules.dialer.backends.twilio import TwilioBackend
+from app.modules.providers.models import Provider
 
 
 class DialerService:
     """Orchestrates dialer backends for campaign execution."""
 
+    BACKENDS = {
+        "asterisk": AsteriskBackend,
+        "twilio": TwilioBackend,
+    }
+
     def __init__(self):
         self.backend = SimulationBackend(seed=42)
 
-    def get_backend(self, backend_name=None):
-        """Return the appropriate backend instance."""
-        if backend_name == "asterisk":
-            # Placeholder for real AsteriskBackend (Phase 4)
-            raise NotImplementedError("AsteriskBackend not yet implemented")
+    def get_backend(self, provider=None):
+        """Return the appropriate backend instance.
+
+        If a Provider object is given, selects the backend based on
+        provider.kind. Falls back to SimulationBackend.
+        """
+        if provider is None:
+            return self.backend
+
+        kind = getattr(provider, "kind", None)
+        backend_class = self.BACKENDS.get(kind)
+
+        if backend_class is None:
+            return self.backend
+
+        config = getattr(provider, "config", {}) or {}
+
+        if kind == "asterisk":
+            return backend_class(
+                host=config.get("host"),
+                port=config.get("port"),
+                username=config.get("username"),
+                secret=config.get("secret"),
+                call_file_dir=config.get("call_file_dir"),
+                context=config.get("context"),
+                extension=config.get("extension"),
+            )
+
+        if kind == "twilio":
+            return backend_class(
+                account_sid=config.get("account_sid"),
+                auth_token=config.get("auth_token"),
+                from_number=config.get("from_number"),
+            )
+
         return self.backend
 
+    def _get_provider_for_campaign(self, campaign_run):
+        """Get the highest-priority connected provider for a campaign."""
+        campaign = None
+        try:
+            from app.modules.campaigns.models import Campaign
+            campaign = Campaign.query.get(campaign_run.campaign_id)
+        except Exception:
+            pass
+
+        if campaign and campaign.provider_id:
+            return Provider.query.get(campaign.provider_id)
+
+        # Fall back to highest-priority connected provider
+        return (
+            Provider.query.filter_by(status="connected")
+            .order_by(Provider.priority.asc())
+            .first()
+        )
+
     def execute(self, campaign_run_id):
-        """Run the full simulation for a campaign run."""
+        """Run the full campaign through the dialer backend."""
         from app.modules.campaigns.models import CampaignRun
 
         campaign_run = CampaignRun.query.get(campaign_run_id)
         if not campaign_run:
             return {"error": "CampaignRun not found"}
 
+        # Get the provider for this campaign and its backend
+        provider = self._get_provider_for_campaign(campaign_run)
+        backend = self.get_backend(provider)
+
         # Get contacts for this campaign (simplified — uses campaign settings)
         contacts = self._get_contacts(campaign_run)
 
         # Launch
-        self.backend.launch(campaign_run, contacts)
-        socketio.emit(
-            "campaign_event",
-            {
-                "run_id": campaign_run_id,
-                "action": "launched",
-                "message": "Campaign simulation launched",
-                "level": "info",
-            },
-            room=f"campaign:{campaign_run_id}",
-        )
+        backend.launch(campaign_run, contacts)
+        socketio.emit("campaign_event", {
+            "run_id": campaign_run_id,
+            "action": "launched",
+            "message": "Campaign launched",
+            "level": "info",
+        }, room=f"campaign:{campaign_run_id}")
 
         # Tick until all calls are complete
         max_ticks = 200
         for tick_num in range(max_ticks):
-            result = self.backend.tick(campaign_run)
+            result = backend.tick(campaign_run)
             if result["processed"] == 0:
                 break
 
             # Emit progress every 10 ticks
             if tick_num % 10 == 0:
-                status = self.backend.status(campaign_run)
-                socketio.emit(
-                    "campaign_event",
-                    {
-                        "run_id": campaign_run_id,
-                        "action": "tick",
-                        "tick": tick_num,
-                        "status_counts": status["status_counts"],
-                        "total_calls": status["total_calls"],
-                        "level": "info",
-                    },
-                    room=f"campaign:{campaign_run_id}",
-                )
+                status = backend.status(campaign_run)
+                socketio.emit("campaign_event", {
+                    "run_id": campaign_run_id,
+                    "action": "tick",
+                    "tick": tick_num,
+                    "status_counts": status["status_counts"],
+                    "total_calls": status["total_calls"],
+                    "level": "info",
+                }, room=f"campaign:{campaign_run_id}")
 
         # Finalize
         self._finalize(campaign_run)

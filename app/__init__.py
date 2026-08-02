@@ -23,6 +23,7 @@ def _register_blueprints(app):
     from app.modules.events import events_bp
     from app.modules.filemanager import filemanager_bp
     from app.modules.notifications import notifications_bp
+    from app.modules.providers import providers_bp
     from app.modules.taskqueue import taskqueue_bp
     from app.modules.ui import ui_bp
     from app.modules.workflow import workflow_bp
@@ -41,6 +42,7 @@ def _register_blueprints(app):
         contacts_bp,
         dialer_bp,
         events_bp,
+        providers_bp,
     ):
         app.register_blueprint(blueprint)
 

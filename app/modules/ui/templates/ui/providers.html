@@ -5,15 +5,136 @@
   <p class="text-body-md text-body-md text-outline mt-1">Connect the phone lines and messaging lanes your campaigns dial out on.</p>
 </div>
 
+{% if providers %}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-  {% set title = 'Voice / SIP' %}{% set icon = 'call' %}{% set description = 'Asterisk, Twilio, Telnyx, Flowroute, Skyetel, Generic SIP. Powers press-1 voice campaigns.' %}
-  {% include "components/setup_card.html" %}
-  {% set title = 'Messaging' %}{% set icon = 'chat' %}{% set description = 'Twilio SMS, SMTP, SendGrid, Mailgun, Google, Microsoft, Meta, Telegram.' %}
-  {% include "components/setup_card.html" %}
+  {% for provider in providers %}
+  <div class="bg-surface border border-primary/40 rounded-xl p-4">
+    <div class="flex items-start justify-between mb-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+          {% if provider.kind == 'asterisk' %}
+          <span class="text-primary font-bold">☎️</span>
+          {% elif provider.kind == 'twilio' %}
+          <span class="text-primary font-bold">📱</span>
+          {% elif provider.kind == 'sip' %}
+          <span class="text-primary font-bold">🔊</span>
+          {% else %}
+          <span class="text-primary font-bold">🔗</span>
+          {% endif %}
+        </div>
+        <div>
+          <h3 class="font-semibold text-primary">{{ provider.kind|capitalize }}</h3>
+          <p class="text-sm text-outline">{{ provider.channel }}</p>
+        </div>
+      </div>
+      <div class="flex flex-col items-end space-y-1">
+        {% if provider.status == 'connected' %}
+        <span class="px-2 py-1 bg-green-900/30 text-green-400 rounded text-xs">🟢 Connected</span>
+        {% else %}
+        <span class="px-2 py-1 bg-red-900/30 text-red-400 rounded text-xs">🔴 Disconnected</span>
+        {% endif %}
+        <span class="px-2 py-1 bg-primary/20 text-primary rounded text-xs">Priority: {{ provider.priority }}</span>
+      </div>
+    </div>
+    
+    <div class="space-y-2 mb-3">
+      <div class="flex justify-between text-sm">
+        <span class="text-outline">Latency:</span>
+        <span class="text-primary">{{ provider.latency_ms or 'N/A' }}ms</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-outline">Uptime:</span>
+        <span class="text-primary">{{ "%d%%" % (provider.provider_uptime or 0) }}</span>
+      </div>
+      {% if provider.config %}
+      <details class="text-sm">
+        <summary class="text-outline cursor-pointer">Connection details</summary>
+        <pre class="mt-1 p-2 bg-black/30 rounded text-xs overflow-x-auto">{{ provider.config|tojson(indent=2) }}</pre>
+      </details>
+      {% endif %}
+    </div>
+    
+    <div class="flex space-x-2">
+      <button onclick="connectProvider({{ provider.id }})" class="flex-1 px-3 py-2 bg-primary/20 hover:bg-primary/40 text-primary rounded text-sm transition-colors">Connect</button>
+      <button onclick="testProvider({{ provider.id }})" class="flex-1 px-3 py-2 bg-green-900/30 hover:bg-green-800/30 text-green-400 rounded text-sm transition-colors">Test</button>
+      <button onclick="viewProviderHealth({{ provider.id }})" class="px-3 py-2 bg-blue-900/30 hover:bg-blue-800/30 text-blue-400 rounded text-sm transition-colors">Health</button>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 
+<div class="bg-surface border border-primary/40 rounded-xl p-6">
+  <h3 class="font-semibold text-primary mb-4">Provider Operations</h3>
+  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <button onclick="showAddProviderModal()" class="px-4 py-3 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg transition-colors text-center">
+      <div class="text-xl mb-1">➕</div>
+      <div class="text-sm">Add Provider</div>
+    </button>
+    
+    <button onclick="refreshAllProviders()" class="px-4 py-3 bg-blue-900/30 hover:bg-blue-800/30 text-blue-400 rounded-lg transition-colors text-center">
+      <div class="text-xl mb-1">🔄</div>
+      <div class="text-sm">Refresh All</div>
+    </button>
+    
+    <button onclick="showProviderFailoverModal()" class="px-4 py-3 bg-purple-900/30 hover:bg-purple-800/30 text-purple-400 rounded-lg transition-colors text-center">
+      <div class="text-xl mb-1">🔀</div>
+      <div class="text-sm">Failover</div>
+    </button>
+  </div>
+</div>
+
+{% else %}
 <div class="bg-surface border border-primary/40 rounded-xl">
   {% set icon = 'link_off' %}{% set title = 'No providers configured' %}{% set message = 'Provider connections arrive with the dialer engine. Every channel here stays "Not configured" until a real connection is established and tested.' %}
   {% include "components/empty_state.html" %}
+  
+  <div class="mt-4 text-center">
+    <button onclick="showAddProviderModal()" class="px-6 py-3 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg transition-colors">
+      Add Your First Provider
+    </button>
+  </div>
+</div>
+{% endif %}
+
+<!-- Provider Management Modals -->
+<div id="addProviderModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-surface border border-primary/40 rounded-xl p-6 max-w-2xl w-full mx-4">
+    <h3 class="font-semibold text-primary mb-4">Add New Provider</h3>
+    <form id="addProviderForm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-outline mb-1">Provider Type</label>
+          <select name="kind" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
+            <option value="asterisk">Asterisk (Voice)</option>
+            <option value="twilio">Twilio (Voice + SMS)</option>
+            <option value="sip">Generic SIP (Voice)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-outline mb-1">Channel</label>
+          <select name="channel" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
+            <option value="voice">Voice</option>
+            <option value="messaging">Messaging</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm text-outline mb-1">Priority (1=Highest)</label>
+          <input type="number" name="priority" value="1" min="1" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
+        </div>
+      </div>
+      
+      <div class="mt-4">
+        <label class="block text-sm text-outline mb-1">Configuration (JSON)</label>
+        <textarea name="config" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary font-mono text-xs" rows="8">{"host": "127.0.0.1", "port": 5038, "username": "admin", "secret": "admin"}</textarea>
+      </div>
+      
+      <div class="flex justify-end space-x-3 mt-6">
+        <button type="button" onclick="hideAddProviderModal()" class="px-4 py-2 text-outline hover:text-primary">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-primary/20 hover:bg-primary/40 text-primary rounded">Add Provider</button>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

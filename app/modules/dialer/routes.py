@@ -3,8 +3,9 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.modules.dialer import dialer_bp
-from app.modules.dialer.models import Call, CallerProfile, Provider
+from app.modules.dialer.models import Call, CallerProfile
 from app.modules.dialer.services import DialerService
+from app.modules.providers.models import Provider
 
 
 @dialer_bp.route("/providers", methods=["GET"])
