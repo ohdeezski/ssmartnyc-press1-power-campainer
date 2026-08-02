@@ -112,9 +112,7 @@ def campaign_launch(campaign_id):
             {"status": campaign.status, "started_at": started, "run_id": run.id}
         )
     flash("Campaign launched", "success")
-    return redirect(
-        url_for("ui.mission_control", campaign_id=campaign.id)
-    )
+    return redirect(url_for("ui.mission_control", campaign_id=campaign.id))
 
 
 @campaigns_bp.route("/<int:campaign_id>/pause", methods=["POST"])

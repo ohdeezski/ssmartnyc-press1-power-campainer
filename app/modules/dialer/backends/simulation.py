@@ -47,10 +47,14 @@ class SimulationBackend(DialerBackend):
         return {"created": len(calls)}
 
     def tick(self, campaign_run):
-        """Advance all 'preparing' or 'dialing' calls by one stage."""
+        """Advance all active calls (not yet complete/failed/blocked/paused) by one stage."""
         pending = (
             Call.query.filter_by(campaign_run_id=campaign_run.id)
-            .filter(Call.status.in_(["preparing", "dialing", "ringing"]))
+            .filter(
+                Call.status.notin_(
+                    ["complete", "failed", "blocked", "paused", "no_answer"]
+                )
+            )
             .all()
         )
         for call in pending:
