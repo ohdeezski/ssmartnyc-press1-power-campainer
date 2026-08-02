@@ -87,11 +87,34 @@ def campaign_launch(campaign_id):
     campaign = result
     started = campaign.started_at.isoformat() if campaign.started_at else None
 
-    # Content-negotiate: JSON client gets JSON, HTML form gets redirect
+    # Create a CampaignRun and start the dialer backend
+    from app.modules.campaigns.models import CampaignRun
+
+    run = CampaignRun(
+        campaign_id=campaign.id,
+        run_number=1,
+        status="running",
+        started_at=db.func.now(),
+        settings_snapshot=campaign.settings or {},
+        total_contacts=(campaign.settings or {}).get("total_contacts", 100),
+    )
+    db.session.add(run)
+    db.session.commit()
+
+    # Start the dialer (eager-mode in dev via Celery, or direct for simulation)
+    from app.modules.dialer.tasks import run_campaign
+
+    run_campaign(run.id)
+
+    # Content-negotiate: JSON client gets JSON, HTML form gets redirect to MC
     if request.accept_mimetypes.best == "application/json":
-        return jsonify({"status": campaign.status, "started_at": started})
+        return jsonify(
+            {"status": campaign.status, "started_at": started, "run_id": run.id}
+        )
     flash("Campaign launched", "success")
-    return redirect(url_for("campaigns.campaign_detail", campaign_id=campaign.id))
+    return redirect(
+        url_for("ui.mission_control", campaign_id=campaign.id)
+    )
 
 
 @campaigns_bp.route("/<int:campaign_id>/pause", methods=["POST"])
