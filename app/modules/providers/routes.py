@@ -1,11 +1,10 @@
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
 from flask_login import login_required
 
 from app.extensions import db
+from app.modules.providers import providers_bp
 from app.modules.providers.models import Provider
 from app.modules.providers.services import ProviderService
-
-providers_bp = Blueprint("providers", __name__, url_prefix="/api/providers")
 
 
 @providers_bp.route("/", methods=["GET"])
@@ -22,7 +21,7 @@ def create_provider():
     """Create a new provider."""
     data = request.get_json() or {}
     kind = data.get("kind", "").strip()
-    if kind not in ("asterisk", "twilio", "sip"):
+    if kind not in ("asterisk", "twilio", "sip", "whatsapp", "smtp", "telegram"):
         return jsonify({"error": f"Invalid provider kind: {kind}"}), 400
     provider = Provider(
         kind=kind,
@@ -52,7 +51,7 @@ def update_provider(provider_id):
     provider = Provider.query.get_or_404(provider_id)
     data = request.get_json() or {}
     kind = data.get("kind", provider.kind)
-    if kind not in ("asterisk", "twilio", "sip"):
+    if kind not in ("asterisk", "twilio", "sip", "whatsapp", "smtp", "telegram"):
         return jsonify({"error": f"Invalid provider kind: {kind}"}), 400
     provider.kind = kind
     provider.channel = data.get("channel", provider.channel)
