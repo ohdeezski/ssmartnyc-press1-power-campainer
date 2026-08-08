@@ -1,0 +1,12 @@
+venv
+.venv
+__pycache__
+*.pyc
+instance/*.db
+uploads
+logs
+exports
+campaigns.db
+*.log
+.git
+.env

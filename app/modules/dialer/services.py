@@ -88,6 +88,12 @@ class DialerService:
         # Get contacts for this campaign (simplified — uses campaign settings)
         contacts = self._get_contacts(campaign_run)
 
+        # Create a CampaignRun if it doesn't exist (for backward compatibility)
+        if campaign_run.status != 'running':
+            campaign_run.status = 'running'
+            campaign_run.started_at = db.func.now()
+            db.session.commit()
+
         # Launch
         backend.launch(campaign_run, contacts)
         socketio.emit(
