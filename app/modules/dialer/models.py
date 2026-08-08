@@ -20,7 +20,7 @@ class Call(db.Model):  # type: ignore[name-defined]
     contact_phone = db.Column(db.String(20), nullable=False)
     status = db.Column(
         db.String(20), nullable=False, default="not_started"
-    )  # not_started|preparing|dialing|ringing|answered|press1|transferring|complete|failed|blocked|voicemail|no_answer|retrying
+    )  # not_started|preparing|dialing|ringing|answered|press1|transferring|complete|failed|blocked|voicemail|no_answer|retrying  # noqa: E501
     outcome = db.Column(db.String(50), nullable=True)
     press1_detected = db.Column(db.Boolean, nullable=False, default=False)
     digits = db.Column(db.String(20), nullable=True)

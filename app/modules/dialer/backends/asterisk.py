@@ -367,7 +367,7 @@ class AsteriskBackend(DialerBackend):
                 f"Context: {self.context}",
                 f"Extension: {self.extension}",
                 "Priority: 1",
-                f"CallerID: {campaign_run.settings_snapshot.get('caller_id', 'Campaign') if campaign_run.settings_snapshot else 'Campaign'}",
+                f"CallerID: {campaign_run.settings_snapshot.get('caller_id', 'Campaign') if campaign_run.settings_snapshot else 'Campaign'}",  # noqa: E501
                 "MaxRetries: 3",
                 "RetryTime: 60",
                 "WaitTime: 30",

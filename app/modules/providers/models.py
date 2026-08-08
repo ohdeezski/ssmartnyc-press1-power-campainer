@@ -3,7 +3,7 @@
 from app.extensions import db
 
 
-class Provider(db.Model):
+class Provider(db.Model):  # type: ignore[name-defined]
     __tablename__ = "providers"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -38,7 +38,7 @@ class Provider(db.Model):
         }
 
 
-class Connection(db.Model):
+class Connection(db.Model):  # type: ignore[name-defined]
     __tablename__ = "provider_connections"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -51,7 +51,7 @@ class Connection(db.Model):
     provider = db.relationship("Provider", backref=db.backref("connections", lazy=True))
 
 
-class CallerProfile(db.Model):
+class CallerProfile(db.Model):  # type: ignore[name-defined]
     __tablename__ = "caller_profiles"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -80,7 +80,7 @@ class CallerProfile(db.Model):
         }
 
 
-class NumberPool(db.Model):
+class NumberPool(db.Model):  # type: ignore[name-defined]
     __tablename__ = "number_pools"
 
     id = db.Column(db.Integer, primary_key=True)

@@ -47,7 +47,9 @@ class DialerService:
         if kind == "twilio":
             return backend_class(
                 account_sid=config.get("account_sid"),
-                auth_token=config.get("auth_token"),
+                auth_token=config.get(
+                    "auth_token"
+                ),  # SECRET_GUARD_IGNORE: config key name, not a literal secret
                 from_number=config.get("from_number"),
             )
 
@@ -89,8 +91,8 @@ class DialerService:
         contacts = self._get_contacts(campaign_run)
 
         # Create a CampaignRun if it doesn't exist (for backward compatibility)
-        if campaign_run.status != 'running':
-            campaign_run.status = 'running'
+        if campaign_run.status != "running":
+            campaign_run.status = "running"
             campaign_run.started_at = db.func.now()
             db.session.commit()
 

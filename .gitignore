@@ -26,3 +26,6 @@ ssl/
 .idea/
 .vscode/
 .DS_Store
+# Local backups
+docker-compose.yml.bak
+*.bak
