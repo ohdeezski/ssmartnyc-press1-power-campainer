@@ -131,7 +131,11 @@ class ConfigLoader:
     @staticmethod
     def load_config(env_name: Optional[str] = None) -> Config:
         if env_name is None:
-            env_name = os.environ.get("FLASK_ENV", "development")
+            # Flask 3 removed support for the FLASK_ENV var, so we accept
+            # both it (legacy) and the canonical APP_ENV.
+            env_name = os.environ.get("APP_ENV") or os.environ.get(
+                "FLASK_ENV", "development"
+            )
 
         config_class = config.get(env_name, config["default"])
         return config_class()

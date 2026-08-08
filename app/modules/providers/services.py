@@ -3,13 +3,19 @@
 from app.extensions import db
 from app.modules.providers.connectors.asterisk import AsteriskConnector
 from app.modules.providers.connectors.sip import SIPConnector
+from app.modules.providers.connectors.smtp import SMTPConnector
+from app.modules.providers.connectors.telegram import TelegramConnector
 from app.modules.providers.connectors.twilio import TwilioConnector
+from app.modules.providers.connectors.whatsapp import WhatsAppCloudConnector
 from app.modules.providers.models import Provider  # noqa: F401 (re-export)
 
 CONNECTOR_MAP = {
     "asterisk": AsteriskConnector,
     "twilio": TwilioConnector,
     "sip": SIPConnector,
+    "whatsapp": WhatsAppCloudConnector,
+    "smtp": SMTPConnector,
+    "telegram": TelegramConnector,
 }
 
 

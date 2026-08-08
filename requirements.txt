@@ -18,3 +18,4 @@ psycopg[binary]==3.3.4
 phonenumbers==8.13.5
 openpyxl==3.1.5
 twilio==9.8.0
+requests==2.32.3

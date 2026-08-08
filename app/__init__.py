@@ -113,7 +113,11 @@ def create_app(config_class=None):
     app = Flask(__name__)
 
     if config_class is None:
-        config_class = os.environ.get("FLASK_ENV", "development")
+        # Flask 3 removed support for the FLASK_ENV var; accept both it
+        # (legacy) and the canonical APP_ENV.
+        config_class = os.environ.get("APP_ENV") or os.environ.get(
+            "FLASK_ENV", "development"
+        )
 
     from app.config import config
 

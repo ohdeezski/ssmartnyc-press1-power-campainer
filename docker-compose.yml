@@ -11,7 +11,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - FLASK_ENV=production
+      - APP_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:?Set POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-street_smart}}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
@@ -29,7 +29,7 @@ services:
     build: .
     command: celery -A app.modules.taskqueue.celery_app worker --loglevel=info
     environment:
-      - FLASK_ENV=production
+      - APP_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:?Set POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-street_smart}}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
@@ -42,7 +42,7 @@ services:
     build: .
     command: celery -A app.modules.taskqueue.celery_app beat --loglevel=info
     environment:
-      - FLASK_ENV=production
+      - APP_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:?Set POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-street_smart}}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
