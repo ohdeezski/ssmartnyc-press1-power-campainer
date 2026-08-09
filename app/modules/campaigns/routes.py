@@ -68,6 +68,16 @@ def campaign_edit(campaign_id):
                 sender[field] = _sender_clean(raw)
         if sender_present:
             settings["sender"] = sender
+        for key in (
+            "whatsapp_template",
+            "telegram_template",
+            "sms_template",
+            "email_subject",
+            "email_body",
+        ):
+            value = request.form.get(key)
+            if value is not None:
+                settings[key] = value
         campaign.settings = settings
         db.session.commit()
         flash("Campaign updated", "success")

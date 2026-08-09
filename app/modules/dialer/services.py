@@ -1,7 +1,9 @@
 from app.extensions import db, socketio
 from app.modules.dialer.backends.asterisk import AsteriskBackend
 from app.modules.dialer.backends.simulation import SimulationBackend
+from app.modules.dialer.backends.telegram import TelegramBackend
 from app.modules.dialer.backends.twilio import TwilioBackend
+from app.modules.dialer.backends.whatsapp import WhatsAppBackend
 from app.modules.providers.models import Provider
 
 
@@ -11,6 +13,8 @@ class DialerService:
     BACKENDS = {
         "asterisk": AsteriskBackend,
         "twilio": TwilioBackend,
+        "telegram": TelegramBackend,
+        "whatsapp": WhatsAppBackend,
     }
 
     def __init__(self):
@@ -52,6 +56,9 @@ class DialerService:
                 ),  # SECRET_GUARD_IGNORE: config key name, not a literal secret
                 from_number=config.get("from_number"),
             )
+
+        if kind in ("telegram", "whatsapp"):
+            return backend_class(config=config)
 
         return self.backend
 
@@ -126,18 +133,40 @@ class DialerService:
                         "action": "tick",
                         "tick": tick_num,
                         "status_counts": status["status_counts"],
-                        "total_calls": status["total_calls"],
+                        "total_calls": status.get("total_calls", 0),
+                        "total_messages": status.get("total_messages", 0),
                         "level": "info",
                     },
                     room=f"campaign:{campaign_run_id}",
                 )
 
         # Finalize
-        self._finalize(campaign_run)
+        self._finalize(campaign_run, backend)
         return {"status": "finished", "run_id": campaign_run_id}
 
     def _get_contacts(self, campaign_run):
-        """Get contacts for the campaign run (simplified)."""
+        """Get contacts for the campaign run.
+
+        Uses the attached ContactList when one exists on the campaign
+        (real names/phones), otherwise generates synthetic contacts to
+        keep simulation/demo runs working.
+        """
+        campaign = None
+        try:
+            from app.modules.campaigns.models import Campaign
+
+            campaign = Campaign.query.get(campaign_run.campaign_id)
+        except Exception:
+            pass
+
+        if campaign and campaign.contact_list_id:
+            from app.modules.contacts.models import Contact
+
+            contacts = Contact.query.filter_by(
+                contact_list_id=campaign.contact_list_id, status="ready"
+            ).all()
+            if contacts:
+                return contacts
 
         # In a real implementation, this would pull from ContactList
         # For simulation, generate synthetic contacts
@@ -150,8 +179,55 @@ class DialerService:
         total = settings.get("total_contacts", 100)
         return [FakeContact(f"+1555{str(i).zfill(7)}") for i in range(total)]
 
-    def _finalize(self, campaign_run):
-        """Mark campaign run as finished and update counters."""
+    def _finalize(self, campaign_run, backend=None):
+        """Mark campaign run as finished and update counters.
+
+        Handles both call pipelines (``Call`` rows) and messaging
+        pipelines (``Message`` rows) so campaign metrics stay correct
+        whichever backend executed the run.
+        """
+        backend = backend or self.backend
+        is_messaging = getattr(backend, "channel", None) in (
+            "whatsapp",
+            "telegram",
+            "sms",
+        )
+
+        if is_messaging:
+            from app.modules.dialer.models import Message
+
+            messages = Message.query.filter_by(campaign_run_id=campaign_run.id).all()
+            total = len(messages)
+            sent = sum(1 for m in messages if m.status == "sent")
+            failed = sum(1 for m in messages if m.status == "failed")
+            paused = sum(1 for m in messages if m.status == "paused")
+
+            campaign_run.status = "finished"
+            campaign_run.finished_at = db.func.now()
+            campaign_run.total_messages = total
+            campaign_run.total_calls = 0
+            campaign_run.success_count = sent
+            campaign_run.failed_count = failed
+            campaign_run.retry_count = paused
+            campaign_run.duration = 0
+            db.session.commit()
+
+            socketio.emit(
+                "campaign_event",
+                {
+                    "run_id": campaign_run.id,
+                    "action": "finished",
+                    "counters": {
+                        "total_messages": total,
+                        "sent": sent,
+                        "failed": failed,
+                    },
+                    "level": "success",
+                },
+                room=f"campaign:{campaign_run.id}",
+            )
+            return
+
         from app.modules.dialer.models import Call
 
         calls = Call.query.filter_by(campaign_run_id=campaign_run.id).all()
@@ -195,7 +271,9 @@ class DialerService:
         from app.modules.campaigns.models import CampaignRun
 
         campaign_run = CampaignRun.query.get(campaign_run_id)
-        self.backend.pause(campaign_run)
+        provider = self._get_provider_for_campaign(campaign_run)
+        backend = self.get_backend(provider)
+        backend.pause(campaign_run)
         socketio.emit(
             "campaign_event",
             {
@@ -210,7 +288,9 @@ class DialerService:
         from app.modules.campaigns.models import CampaignRun
 
         campaign_run = CampaignRun.query.get(campaign_run_id)
-        self.backend.stop(campaign_run)
+        provider = self._get_provider_for_campaign(campaign_run)
+        backend = self.get_backend(provider)
+        backend.stop(campaign_run)
         socketio.emit(
             "campaign_event",
             {

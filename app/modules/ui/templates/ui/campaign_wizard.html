@@ -134,6 +134,18 @@
                class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
                placeholder="@lesbar_bot">
       </div>
+      <div data-field-for="whatsapp" class="md:col-span-2">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">WhatsApp Message</label>
+        <textarea name="whatsapp_template" rows="3"
+                  class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+                  placeholder="Hi {name}, your offer is ready — reply YES to claim.">{{ (campaign.settings or {}).get('whatsapp_template', '') }}</textarea>
+      </div>
+      <div data-field-for="telegram" class="md:col-span-2">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Telegram Message</label>
+        <textarea name="telegram_template" rows="3"
+                  class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+                  placeholder="Hi {name}, your offer is ready — tap to claim.">{{ (campaign.settings or {}).get('telegram_template', '') }}</textarea>
+      </div>
     </div>
   </div>
 

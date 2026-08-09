@@ -18,6 +18,12 @@
           <span class="text-primary font-bold">📱</span>
           {% elif provider.kind == 'sip' %}
           <span class="text-primary font-bold">🔊</span>
+          {% elif provider.kind == 'whatsapp' %}
+          <span class="text-primary font-bold">💬</span>
+          {% elif provider.kind == 'telegram' %}
+          <span class="text-primary font-bold">✈️</span>
+          {% elif provider.kind == 'smtp' %}
+          <span class="text-primary font-bold">📧</span>
           {% else %}
           <span class="text-primary font-bold">🔗</span>
           {% endif %}
@@ -105,15 +111,18 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-outline mb-1">Provider Type</label>
-          <select name="kind" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
+          <select name="kind" id="provider-kind" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
             <option value="asterisk">Asterisk (Voice)</option>
             <option value="twilio">Twilio (Voice + SMS)</option>
             <option value="sip">Generic SIP (Voice)</option>
+            <option value="whatsapp">WhatsApp Business Cloud</option>
+            <option value="telegram">Telegram Bot</option>
+            <option value="smtp">SMTP Relay (Email)</option>
           </select>
         </div>
         <div>
           <label class="block text-sm text-outline mb-1">Channel</label>
-          <select name="channel" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
+          <select name="channel" id="provider-channel" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
             <option value="voice">Voice</option>
             <option value="messaging">Messaging</option>
             <option value="email">Email</option>
@@ -124,10 +133,12 @@
           <input type="number" name="priority" value="1" min="1" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary">
         </div>
       </div>
-      
-      <div class="mt-4">
+
+      <div id="provider-fields" class="mt-4 space-y-3"></div>
+
+      <div class="mt-4" id="config-json-wrap">
         <label class="block text-sm text-outline mb-1">Configuration (JSON)</label>
-        <textarea name="config" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary font-mono text-xs" rows="8">{"host": "127.0.0.1", "port": 5038, "username": "admin", "secret": "admin"}</textarea>
+        <textarea name="config" id="provider-config" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary font-mono text-xs" rows="8"></textarea>
       </div>
       
       <div class="flex justify-end space-x-3 mt-6">
@@ -137,4 +148,122 @@
     </form>
   </div>
 </div>
+
+<script>
+// Field templates + default JSON per provider kind.
+const PROVIDER_PRESETS = {
+  asterisk: {
+    channel: 'voice',
+    fields: [['host', 'Host'], ['port', 'AMI/REST Port'], ['username', 'AMI user'], ['secret', 'AMI secret', 'password'], ['call_file_dir', 'Asterisk outgoing dir']],
+    config: { host: '127.0.0.1', port: 5038, username: 'admin', secret: '' }
+  },
+  twilio: {
+    fields: [['account_sid', 'Account SID', 'password'], ['auth_token', 'Auth Token', 'password'], ['from_number', 'From Number']],
+    config: { account_sid: '', auth_token: '', from_number: '' }
+  },
+  sip: {
+    fields: [['server', 'SIP Server'], ['port', 'Port'], ['username', 'Username'], ['password', 'Password', 'password']],
+    config: { server: '', port: 5060, username: '', password: '' }
+  },
+  whatsapp: {
+    channel: 'messaging',
+    fields: [['token', 'Access Token', 'password'], ['phone_number_id', 'Phone Number ID']],
+    config: { token: '', phone_number_id: '' }
+  },
+  telegram: {
+    channel: 'messaging',
+    fields: [['token', 'Bot Token', 'password'], ['parse_mode', 'Parse Mode']],
+    config: { token: '', parse_mode: 'HTML' }
+  },
+  smtp: {
+    channel: 'email',
+    fields: [['host', 'SMTP Host'], ['port', 'Port'], ['user', 'Username'], ['password', 'Password', 'password'], ['from_email', 'From Email'], ['from_name', 'From Name']],
+    config: { host: '', port: 587, user: '', password: '', from_email: '', from_name: '' }
+  }
+};
+
+function getCSRF() {
+  const m = document.querySelector('meta[name="csrf-token"]');
+  return m ? m.content : '';
+}
+
+async function apiFetch(url, method, body) {
+  const resp = await fetch(url, {
+    method: method || 'GET',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRF() },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await resp.json().catch(() => ({}));
+  return { status: resp.status, data };
+}
+
+function showAddProviderModal() {
+  document.getElementById('addProviderModal').classList.remove('hidden');
+  renderProviderFields();
+}
+function hideAddProviderModal() {
+  document.getElementById('addProviderModal').classList.add('hidden');
+}
+
+function renderProviderFields() {
+  const kind = document.getElementById('provider-kind').value;
+  const preset = PROVIDER_PRESETS[kind] || { fields: [], config: {} };
+  const channel = document.getElementById('provider-channel');
+  if (preset.channel) channel.value = preset.channel;
+  const wrap = document.getElementById('provider-fields');
+  wrap.innerHTML = '';
+  for (const [key, label, type] of preset.fields) {
+    const div = document.createElement('div');
+    div.innerHTML =
+      '<label class="block text-sm text-outline mb-1">' + label + '</label>' +
+      '<input type="' + (type === 'password' ? 'password' : 'text') + '" class="w-full px-3 py-2 bg-black/30 border border-primary/30 rounded text-primary" data-kv="' + key + '">';
+    wrap.appendChild(div);
+  }
+  document.getElementById('provider-config').value = JSON.stringify(preset.config, null, 2);
+}
+
+function collectProviderConfig() {
+  const kind = document.getElementById('provider-kind').value;
+  const preset = PROVIDER_PRESETS[kind] || {};
+  const cfg = {};
+  for (const [key] of preset.fields || []) {
+    const input = document.querySelector('#provider-fields [data-kv="' + key + '"]');
+    if (input) cfg[key] = input.value;
+  }
+  try {
+    const manual = JSON.parse(document.getElementById('provider-config').value || '{}');
+    Object.assign(cfg, manual);
+  } catch (e) { /* keep typed fields */ }
+  return cfg;
+}
+
+async function connectProvider(id) { await apiFetch('/api/providers/' + id + '/connect', 'POST', {}); location.reload(); }
+async function testProvider(id) { await apiFetch('/api/providers/' + id + '/test', 'POST', {}); location.reload(); }
+async function viewProviderHealth(id) { await apiFetch('/api/providers/' + id + '/health', 'GET', null); location.reload(); }
+async function refreshAllProviders() { location.reload(); }
+function showProviderFailoverModal() { alert('Failover routes dial down provider priority order once a provider fails its health check.'); }
+
+const addProviderForm = document.getElementById('addProviderForm');
+if (addProviderForm) {
+  addProviderForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const kind = document.getElementById('provider-kind').value;
+    const channel = document.getElementById('provider-channel').value;
+    const priority = parseInt(document.querySelector('[name="priority"]').value, 10) || 1;
+    const config = collectProviderConfig();
+    const result = await apiFetch('/api/providers/', 'POST', { kind, channel, priority, config });
+    if (result.status >= 200 && result.status < 300) {
+      hideAddProviderModal();
+      location.reload();
+    } else {
+      alert('Could not add provider: ' + (result.data.error || result.status));
+    }
+  });
+}
+
+if (document.getElementById('provider-kind')) {
+  document.getElementById('provider-kind').addEventListener('change', renderProviderFields);
+  renderProviderFields();
+}
+</script>
 {% endblock %}

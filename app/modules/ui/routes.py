@@ -187,6 +187,17 @@ def campaign_wizard(campaign_id):
             except (TypeError, ValueError):
                 continue
 
+        for key in (
+            "whatsapp_template",
+            "telegram_template",
+            "sms_template",
+            "email_subject",
+            "email_body",
+        ):
+            value = request.form.get(key)
+            if value is not None:
+                settings[key] = value
+
         sender = dict(campaign.settings.get("sender") or {})
         for field in SENDER_FIELD_LABELS:
             raw = request.form.get(field)
