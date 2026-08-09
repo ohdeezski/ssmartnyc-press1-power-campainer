@@ -152,13 +152,51 @@ def mission_control(campaign_id):
     )
 
 
-@ui_bp.route("/campaign-wizard/<int:campaign_id>")
+@ui_bp.route("/campaign-wizard/<int:campaign_id>", methods=["GET", "POST"])
 @login_required
 def campaign_wizard(campaign_id):
+    from app.extensions import db
     from app.modules.campaigns.models import Campaign
+    from app.modules.campaigns.services import (
+        SENDER_FIELD_LABELS,
+        _sender_clean,
+        sender_identity,
+    )
     from app.modules.contacts.models import ContactList
 
     campaign = Campaign.query.get_or_404(campaign_id)
+
+    if request.method == "POST":
+        # Step 1 “Prepare” saves the base campaign settings plus the
+        # per-pipeline sender identity block. Redirect back to step 2
+        # (Verify) so the operator can run readiness checks next.
+        campaign.name = _sender_clean(request.form.get("name")) or campaign.name
+        campaign.type = request.form.get("type") or campaign.type
+        contact_list_id = request.form.get("contact_list_id")
+        if contact_list_id:
+            campaign.contact_list_id = int(contact_list_id)
+
+        settings = dict(campaign.settings or {})
+        # Keep legacy top-level call fields in sync when present.
+        for key in ("concurrent_calls", "retry_attempts", "retry_delay"):
+            value = request.form.get(key)
+            if value == "" or value is None:
+                continue
+            try:
+                settings[key] = int(value)
+            except (TypeError, ValueError):
+                continue
+
+        sender = dict(campaign.settings.get("sender") or {})
+        for field in SENDER_FIELD_LABELS:
+            raw = request.form.get(field)
+            if raw is not None:
+                sender[field] = _sender_clean(raw)
+        settings["sender"] = sender
+        campaign.settings = settings
+        db.session.commit()
+        return redirect(url_for("ui.campaign_wizard", campaign_id=campaign.id, step=2))
+
     contact_lists = ContactList.query.order_by(ContactList.created_at.desc()).all()
     step = request.args.get("step", 1, type=int)
     readiness = campaign.readiness or {}
@@ -168,6 +206,7 @@ def campaign_wizard(campaign_id):
         contact_lists=contact_lists,
         step=step,
         readiness=readiness if step > 1 else None,
+        sender=sender_identity(campaign.settings),
         user=current_user,
     )
 

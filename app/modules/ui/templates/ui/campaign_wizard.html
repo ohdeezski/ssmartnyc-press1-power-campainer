@@ -34,8 +34,10 @@
   {% if step == 1 %}
   {# PREPARE step #}
   <h3 class="font-headline-md text-headline-md font-bold text-primary uppercase tracking-widest mb-4">Step 1 — Prepare</h3>
-  <p class="text-body-md text-body-md text-outline mb-4">Choose your contacts, audio files, and campaign settings.</p>
+  <p class="text-body-md text-body-md text-outline mb-4">Choose your contacts, audio files, sender identity, and campaign settings.</p>
 
+  <form method="POST" action="{{ url_for('ui.campaign_wizard', campaign_id=campaign.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="space-y-4">
     <div>
       <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Campaign Name</label>
@@ -45,11 +47,14 @@
     </div>
     <div>
       <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Campaign Type</label>
-      <select name="type"
+      <select name="type" id="campaign-type"
               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md">
         <option value="voice" {{ 'selected' if campaign and campaign.type == 'voice' }}>Voice</option>
         <option value="sms" {{ 'selected' if campaign and campaign.type == 'sms' }}>SMS</option>
         <option value="email" {{ 'selected' if campaign and campaign.type == 'email' }}>Email</option>
+        <option value="whatsapp" {{ 'selected' if campaign and campaign.type == 'whatsapp' }}>WhatsApp</option>
+        <option value="telegram" {{ 'selected' if campaign and campaign.type == 'telegram' }}>Telegram</option>
+        <option value="multi" {{ 'selected' if campaign and campaign.type == 'multi' }}>Multi-channel</option>
       </select>
     </div>
     <div>
@@ -73,6 +78,72 @@
              class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md" min="0" max="10">
     </div>
   </div>
+
+  {# Per-pipeline sender / caller identity — the number and name the
+     recipient sees for this campaign. #}
+  <div class="mt-6 p-4 rounded-xl border border-outline-variant/40 bg-surface-container-lowest/40">
+    <h4 class="font-label-md text-label-md font-bold text-primary uppercase tracking-widest mb-1">Sender Identity</h4>
+    <p class="text-body-sm text-outline mb-4">The caller ID / sender the recipient sees. Leave blank to use provider defaults.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-sender-fields>
+      <div data-field-for="voice">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Caller ID Name</label>
+        <input type="text" name="caller_id_name" value="{{ sender.caller_id_name or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="LES Bar">
+      </div>
+      <div data-field-for="voice">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Caller ID Number</label>
+        <input type="text" name="caller_id_number" value="{{ sender.caller_id_number or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="+12125550100">
+      </div>
+      <div data-field-for="sms">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">SMS Sender ID</label>
+        <input type="text" name="sms_sender_id" value="{{ sender.sms_sender_id or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="LESBAR">
+      </div>
+      <div data-field-for="sms">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">SMS From Number</label>
+        <input type="text" name="sms_from_number" value="{{ sender.sms_from_number or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="+12125550100">
+      </div>
+      <div data-field-for="email">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Email From Name</label>
+        <input type="text" name="email_from_name" value="{{ sender.email_from_name or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="LES Bar">
+      </div>
+      <div data-field-for="email">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Email From Address</label>
+        <input type="text" name="email_from_address" value="{{ sender.email_from_address or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="hello@lesbar.com">
+      </div>
+      <div data-field-for="whatsapp">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">WhatsApp Sender Name</label>
+        <input type="text" name="whatsapp_sender_name" value="{{ sender.whatsapp_sender_name or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="LES Bar">
+      </div>
+      <div data-field-for="telegram">
+        <label class="font-label-md text-label-md text-primary uppercase tracking-wider block mb-2">Telegram Sender Name</label>
+        <input type="text" name="telegram_sender_name" value="{{ sender.telegram_sender_name or '' }}"
+               class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-on-surface font-body-md"
+               placeholder="@lesbar_bot">
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6">
+    <button type="submit"
+            class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-6 py-2 rounded hover:bg-primary-fixed-dim transition-colors">
+      Save &amp; Continue →
+    </button>
+  </div>
+  </form>
 
   {% elif step == 2 %}
   {# VERIFY step #}
@@ -190,9 +261,28 @@
   <a href="{{ url_for('ui.campaign_wizard', campaign_id=campaign.id, step=step-1) }}"
      class="font-label-md text-label-md uppercase tracking-wider text-outline hover:text-primary transition-colors">← Previous</a>
   {% endif %}
-  {% if step < 5 %}
+  {% if step > 1 and step < 5 %}
   <a href="{{ url_for('ui.campaign_wizard', campaign_id=campaign.id, step=step+1) }}"
      class="font-label-md text-label-md uppercase tracking-wider text-background bg-primary px-4 py-2 rounded hover:bg-primary-fixed-dim transition-colors">Next →</a>
   {% endif %}
 </div>
+
+<script>
+// Show only the sender-identity fields that apply to the selected channel.
+(function () {
+  var typeEl = document.getElementById('campaign-type');
+  var groups = document.querySelectorAll('[data-field-for]');
+  function apply() {
+    var t = typeEl ? typeEl.value : 'voice';
+    groups.forEach(function (el) {
+      var show = t === 'multi' || el.dataset.fieldFor === t;
+      el.style.display = show ? '' : 'none';
+    });
+  }
+  if (typeEl) {
+    typeEl.addEventListener('change', apply);
+    apply();
+  }
+})();
+</script>
 {% endblock %}

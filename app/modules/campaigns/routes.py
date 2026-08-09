@@ -38,21 +38,37 @@ def campaign_new():
 @campaigns_bp.route("/<int:campaign_id>/edit", methods=["GET", "POST"])
 @login_required
 def campaign_edit(campaign_id):
+    from app.modules.campaigns.services import SENDER_FIELD_LABELS, _sender_clean
+
     campaign = Campaign.query.get_or_404(campaign_id)
     if request.method == "POST":
         campaign.name = request.form.get("name", campaign.name)
         campaign.type = request.form.get("type", campaign.type)
         settings_raw = request.form.get("settings", "")
+        settings = dict(campaign.settings or {})
         if settings_raw.strip():
             try:
-                campaign.settings = json.loads(settings_raw)
+                parsed = json.loads(settings_raw)
+                if isinstance(parsed, dict):
+                    settings.update(parsed)
             except (ValueError, TypeError):
                 flash("Settings must be valid JSON", "danger")
                 return render_template(
                     "campaigns/edit.html", campaign=campaign, user=current_user
                 )
-        else:
-            campaign.settings = {}
+
+        # Per-pipeline sender identity block (structured fields on the edit UI).
+        sender = dict(settings.get("sender") or {})
+        sender_present = any(
+            request.form.get(f) is not None for f in SENDER_FIELD_LABELS
+        )
+        for field in SENDER_FIELD_LABELS:
+            raw = request.form.get(field)
+            if raw is not None:
+                sender[field] = _sender_clean(raw)
+        if sender_present:
+            settings["sender"] = sender
+        campaign.settings = settings
         db.session.commit()
         flash("Campaign updated", "success")
         return redirect(url_for("campaigns.campaign_edit", campaign_id=campaign.id))

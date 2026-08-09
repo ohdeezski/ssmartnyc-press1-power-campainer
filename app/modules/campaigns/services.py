@@ -175,6 +175,55 @@ VERIFY_CHECKS = [
 ]
 
 
+# Per-campaign sender identity for each delivery pipeline. Keys map to
+# fields the templates render and the dialer/mailer backends consume.
+# Values default to "" (unset → provider/env defaults are used downstream).
+SENDER_FIELDS = {
+    "voice": ("caller_id_name", "caller_id_number"),
+    "sms": ("sms_sender_id", "sms_from_number"),
+    "email": ("email_from_name", "email_from_address"),
+    "whatsapp": ("whatsapp_sender_name",),
+    "telegram": ("telegram_sender_name",),
+}
+
+# Wire channel→delivery backend keys for the wizard host page.
+SENDER_FIELD_LABELS = {
+    "caller_id_name": "Caller ID name (voice)",
+    "caller_id_number": "Caller ID number (voice)",
+    "sms_sender_id": "SMS sender ID",
+    "sms_from_number": "SMS from number",
+    "email_from_name": "Email From name",
+    "email_from_address": "Email From address",
+    "whatsapp_sender_name": "WhatsApp sender name",
+    "telegram_sender_name": "Telegram sender name",
+}
+
+
+def _sender_clean(value):
+    """Normalize a sender field: strip whitespace, None → ""."""
+    return (value or "").strip()
+
+
+def sender_identity(settings):
+    """Return the resolved sender identity block for a campaign settings
+    dict, filling every pipeline slot with an explicit value (or None)."""
+    settings = settings or {}
+    sender = (
+        (settings.get("sender") or {})
+        if isinstance(settings.get("sender"), dict)
+        else {}
+    )
+    out = {}
+    for field in SENDER_FIELD_LABELS:
+        out[field] = sender.get(field) or None
+    # Legacy shim: caller id used to live at the top level of settings.
+    if out["caller_id_number"] is None and settings.get("caller_id_number"):
+        out["caller_id_number"] = str(settings["caller_id_number"])
+    if out["caller_id_name"] is None and settings.get("caller_id"):
+        out["caller_id_name"] = str(settings["caller_id"])
+    return out
+
+
 class CampaignService:
     @staticmethod
     def create_campaign(name, campaign_type, created_by, settings=None):

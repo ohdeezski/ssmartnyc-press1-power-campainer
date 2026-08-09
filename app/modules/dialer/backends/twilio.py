@@ -102,9 +102,17 @@ class TwilioBackend(DialerBackend):
         twiml_url = settings.get("twiml_url", "")
         status_callback = settings.get("status_callback", "")
 
+        # Per-campaign caller ID overrides the provider-level from_number.
+        sender = settings.get("sender") or {}
+        from_number = (
+            sender.get("caller_id_number")
+            or settings.get("caller_id_number")
+            or self.from_number
+        )
+
         params = {
             "to": call.contact_phone,
-            "from_": self.from_number,
+            "from_": from_number,
             "url": twiml_url or "",
         }
         if status_callback:

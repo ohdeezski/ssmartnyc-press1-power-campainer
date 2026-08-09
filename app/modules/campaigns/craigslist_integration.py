@@ -54,7 +54,14 @@ class CraigslistReplyService:
         """True when an SMTP relay can be reached."""
         return bool(self.smtp_host and self.smtp_user and self.smtp_password)
 
-    def send_reply(self, posting_id, reply_content, contact_info, reply_email=None):
+    def send_reply(
+        self,
+        posting_id,
+        reply_content,
+        contact_info,
+        reply_email=None,
+        sender_identity=None,
+    ):
         """
         Send a reply to a Craigslist posting.
 
@@ -65,6 +72,9 @@ class CraigslistReplyService:
             reply_email: Optional anonymized reply mailbox
                 (``.reply.craigslist.org``). When omitted, defaults to the
                 conventional ``<posting_id>@reply.craigslist.org``.
+            sender_identity: Optional per-campaign sender block (dict with
+                ``email_from_name`` / ``email_from_address``) that overrides
+                the service-level From address/name.
 
         Returns:
             dict with status ("sent", "failed", "empty", "not_configured")
@@ -90,8 +100,11 @@ class CraigslistReplyService:
             }
 
         recipient = reply_email or f"{posting_id}@reply.craigslist.org"
+        sender_identity = sender_identity or {}
+        from_name = sender_identity.get("email_from_name") or self.from_name
+        from_email = sender_identity.get("email_from_address") or self.from_email
         msg = MIMEMultipart()
-        msg["From"] = formataddr((self.from_name, self.from_email))
+        msg["From"] = formataddr((from_name, from_email))
         msg["To"] = recipient
         msg["Subject"] = f"Re: {posting_id}"
         msg.attach(MIMEText(reply_content, "plain"))

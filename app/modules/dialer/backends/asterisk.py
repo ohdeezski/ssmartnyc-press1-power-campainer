@@ -361,19 +361,33 @@ class AsteriskBackend(DialerBackend):
             filename = f"call_{campaign_run.id}_{call.id}.call"
             filepath = os.path.join(self.call_file_dir, filename)
 
+            # Resolve per-campaign caller identity (caller ID name + number).
+            # Falls back to the campaign ``caller_id`` legacy key, then to a
+            # provider-level number when set, otherwise a safe placeholder.
+            snapshot = campaign_run.settings_snapshot or {}
+            sender = snapshot.get("sender") or {}
+            caller_name = (
+                sender.get("caller_id_name") or snapshot.get("caller_id") or "Campaign"
+            )
+            caller_number = sender.get("caller_id_number") or snapshot.get(
+                "caller_id_number"
+            )
+            if not caller_number:
+                caller_number = self.extension or "unknown"
+
             # Build call file content
             content_lines = [
                 f"Channel: Local/{call.contact_phone}@from-internal",
                 f"Context: {self.context}",
                 f"Extension: {self.extension}",
                 "Priority: 1",
-                f"CallerID: {campaign_run.settings_snapshot.get('caller_id', 'Campaign') if campaign_run.settings_snapshot else 'Campaign'}",  # noqa: E501
+                f"CallerID: {caller_name} <{caller_number}>",
                 "MaxRetries: 3",
                 "RetryTime: 60",
                 "WaitTime: 30",
                 f"Account: campaign_{campaign_run.id}",
                 "Archive: yes",
-                f'Set: CALLERID(all)="Press1 Campaign"<{call.contact_phone}>',
+                f'Set: CALLERID(all)="{caller_name}"<{caller_number}>',
                 "",
             ]
 
